@@ -1,4 +1,3 @@
-# src/utils/error_handlers.py
 from flask import jsonify
 
 def register_error_handlers(app):
