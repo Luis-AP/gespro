@@ -16,6 +16,8 @@ class Config:
     DB_PASSWORD = os.getenv("DB_PASSWORD")
     DB_NAME = os.getenv("DB_NAME")
 
+    JWT_SECRET_KEY = os.getenv("SECRET_KEY")
+    JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hora en segundos
 
 class ProductionConfig(Config):
     """Production configuration."""
