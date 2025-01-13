@@ -24,28 +24,19 @@ DROP TABLE IF EXISTS `activities`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `activities` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(45) DEFAULT NULL,
+  `name` varchar(45) NOT NULL,
   `description` varchar(245) DEFAULT NULL,
-  `due_date` datetime DEFAULT NULL,
-  `min_grade` decimal(10,0) DEFAULT NULL,
+  `due_date` datetime NOT NULL,
+  `min_grade` decimal(10,0) NOT NULL,
   `professor_id` int unsigned NOT NULL,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_activity_professor_idx` (`professor_id`),
   KEY `idx_activity_date` (`due_date`),
   CONSTRAINT `fk_activity_professor` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `activities`
---
-
-LOCK TABLES `activities` WRITE;
-/*!40000 ALTER TABLE `activities` DISABLE KEYS */;
-/*!40000 ALTER TABLE `activities` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `professors`
@@ -63,17 +54,8 @@ CREATE TABLE `professors` (
   KEY `fk_professor_user_idx` (`user_id`),
   KEY `idx_professor_department` (`department`),
   CONSTRAINT `fk_professor_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `professors`
---
-
-LOCK TABLES `professors` WRITE;
-/*!40000 ALTER TABLE `professors` DISABLE KEYS */;
-/*!40000 ALTER TABLE `professors` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `students`
@@ -93,17 +75,8 @@ CREATE TABLE `students` (
   KEY `fk_student_user_idx` (`user_id`),
   KEY `idx_student_enrollment` (`enrollment_number`),
   CONSTRAINT `fk_student_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `students`
---
-
-LOCK TABLES `students` WRITE;
-/*!40000 ALTER TABLE `students` DISABLE KEYS */;
-/*!40000 ALTER TABLE `students` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `users`
@@ -118,20 +91,11 @@ CREATE TABLE `users` (
   `password` varbinary(60) NOT NULL,
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
-  `created_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email_UNIQUE` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `users`
---
-
-LOCK TABLES `users` WRITE;
-/*!40000 ALTER TABLE `users` DISABLE KEYS */;
-/*!40000 ALTER TABLE `users` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -142,4 +106,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-01-12 20:45:47
+-- Dump completed on 2025-01-13  0:18:59
