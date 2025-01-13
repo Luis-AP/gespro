@@ -11,7 +11,7 @@ class Database:
             self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="pileta",
                                                                     pool_size=5,
                                                                     host=config.DB_HOST,
-                                                                    database=config.DB_DATABASE,
+                                                                    database=config.DB_NAME,
                                                                     user=config.DB_USER,
                                                                     password=config.DB_PASSWORD)
         except mysql.connector.Error as err:
