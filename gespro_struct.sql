@@ -110,9 +110,8 @@ CREATE TABLE `users` (
 
 --Stored Procedure for creating a student
 
-DELIMITER //
-
-CREATE PROCEDURE CreateStudent (
+DELIMITER ;;
+CREATE PROCEDURE `CreateStudent`(
     IN p_email VARCHAR(100),
     IN p_password VARBINARY(60),
     IN p_first_name VARCHAR(100),

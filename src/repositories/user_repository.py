@@ -1,5 +1,6 @@
 from src.models.user import Student, Professor
 from typing import Union
+from mysql.connector.errors import IntegrityError
 
 
 class UserRepository:
@@ -35,8 +36,8 @@ class UserRepository:
                     user.email = result["email"]
                     return user
                 return None
-        except Exception as e:
-            raise e
+        except:
+            raise
 
     def get_user_by_email(self, email: str) -> Union[Student, Professor]:
         """Obtiene un usuario por su email, ya sea estudiante o profesor."""
@@ -44,7 +45,7 @@ class UserRepository:
         try:
             with self.connection.cursor(dictionary=True) as cursor:
                 query = """
-                SELECT u.id AS user_id, s.id AS student_id, p.id AS professor_id,
+                SELECT u.id AS user_id, u.password, s.id AS student_id, p.id AS professor_id,
                     CASE WHEN s.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_student
                 FROM users u
                 LEFT JOIN students s ON u.id = s.user_id
@@ -58,17 +59,19 @@ class UserRepository:
                         user = Student(
                             id=result["student_id"],
                             user_id=result["user_id"],
+                            password=result["password"],
                         )
                     else:
                         user = Professor(
                             id=result["professor_id"],
                             user_id=result["user_id"],
+                            password=result["password"],
                         )
                     user.email = email
                     return user
                 return None
-        except Exception as e:
-            raise e
+        except:
+            raise
 
     def get_students(self, filter_criteria: dict = None) -> list:
         """Devuelve una lista de estudiantes.
@@ -106,8 +109,8 @@ class UserRepository:
                     )
                     students.append(student)
                 return students
-        except Exception as e:
-            raise e
+        except:
+            raise
 
     def get_professors(self, filter_criteria: dict = None) -> list:
         """Devuelve una lista de profesores.
@@ -144,8 +147,8 @@ class UserRepository:
                     )
                     professors.append(professor)
                 return professors
-        except Exception as e:
-            raise e
+        except:
+            raise
 
     def create_student(self, student: Student) -> Student:
         """Llama al procedimiento almacenado para crear un estudiante."""
@@ -169,6 +172,6 @@ class UserRepository:
                     student.password = None
                     return student
                 return None
-        except Exception as e:
+        except IntegrityError as e:
             self.connection.rollback()
-            raise e
+            raise
