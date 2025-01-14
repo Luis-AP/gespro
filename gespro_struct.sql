@@ -107,3 +107,31 @@ CREATE TABLE `users` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-01-13  0:18:59
+
+--Stored Procedure for creating a student
+
+DELIMITER //
+
+CREATE PROCEDURE CreateStudent (
+    IN p_email VARCHAR(100),
+    IN p_password VARBINARY(60),
+    IN p_first_name VARCHAR(100),
+    IN p_last_name VARCHAR(100),
+    IN p_enrollment_number INT,
+    IN p_major VARCHAR(100),
+    IN p_enrolled_at DATETIME,
+    OUT user_id INT UNSIGNED
+)
+BEGIN
+    -- Insert into users table
+    INSERT INTO users (email, password, first_name, last_name, created_at)
+    VALUES (p_email, p_password, p_first_name, p_last_name, NOW());
+    
+    SET user_id = LAST_INSERT_ID();
+    
+    -- Insert into students table
+    INSERT INTO students (user_id, enrollment_number, major, enrolled_at)
+    VALUES (user_id, p_enrollment_number, p_major, p_enrolled_at);
+END //
+
+DELIMITER ;
