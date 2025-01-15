@@ -156,8 +156,8 @@ class UserRepository:
 
     def create_student(self, student: Student) -> Student:
         """Llama al procedimiento almacenado para crear un estudiante."""
-        try:
-            with self.connection as conn:
+        with self.connection as conn:
+            try:
                 cursor = conn.cursor()
                 res = cursor.callproc(
                     "CreateStudent",
@@ -172,12 +172,11 @@ class UserRepository:
                         None,
                     ),
                 )
-
-        except IntegrityError:
-            self.connection.rollback()
-            raise
-        else:
-            self.connection.commit()
-            student.id = res[-1]
-            student.password = None
-            return student
+            except IntegrityError:
+                self.connection.rollback()
+                raise
+            else:
+                self.connection.commit()
+                student.id = res[-1]
+                student.password = None
+                return student
