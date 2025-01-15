@@ -11,7 +11,8 @@ class UserRepository:
         """Obtiene un usuario por su id, ya sea estudiante o profesor."""
 
         try:
-            with self.connection.cursor(dictionary=True) as cursor:
+            with self.connection as conn:
+                cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT u.id AS user_id, u.email, s.id AS student_id, p.id AS professor_id,
                     CASE WHEN s.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_student
@@ -43,7 +44,8 @@ class UserRepository:
         """Obtiene un usuario por su email, ya sea estudiante o profesor."""
 
         try:
-            with self.connection.cursor(dictionary=True) as cursor:
+            with self.connection as conn:
+                cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT u.id AS user_id, u.password, s.id AS student_id, p.id AS professor_id,
                     CASE WHEN s.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_student
@@ -81,7 +83,8 @@ class UserRepository:
             list: Lista de estudiantes.
         """
         try:
-            with self.connection.cursor(dictionary=True) as cursor:
+            with self.connection as conn:
+                cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT s.*, u.email, u.first_name, u.last_name, u.created_at
                 FROM students s
@@ -120,7 +123,8 @@ class UserRepository:
             list: Lista de profesores.
         """
         try:
-            with self.connection.cursor(dictionary=True) as cursor:
+            with self.connection as conn:
+                cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT p.*, u.email, u.first_name, u.last_name, u.created_at
                 FROM professors p
@@ -153,7 +157,8 @@ class UserRepository:
     def create_student(self, student: Student) -> Student:
         """Llama al procedimiento almacenado para crear un estudiante."""
         try:
-            with self.connection.cursor() as cursor:
+            with self.connection as conn:
+                cursor = conn.cursor()
                 res = cursor.callproc(
                     "CreateStudent",
                     (
