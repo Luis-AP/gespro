@@ -5,7 +5,8 @@ from flask import abort
 from flask import Blueprint
 
 from src.models.user import User, Student
-from src.services.auth_service import AuthService
+from src.services.auth_service import AuthService, AuthPasswordError
+from src.db import DbError
 
 auth_routes_bp = Blueprint('auth_bp', __name__, url_prefix="/api/auth")
 
@@ -20,11 +21,19 @@ def register_student():
                             major=request.form.get("major", ''),
                             enrolled_at=request.form.get("enrolled_at", '')
     )
-    saved_student = AuthService(app.db).create_student(student_to_register)
-    if saved_student.id:
-        return jsonify({"message": f"Student {saved_student.email} successfully saved"}), 200
+    try:
+        saved_student = AuthService(app.db).create_student(student_to_register)
+    except DbError:
+        abort(500)
+    except AuthPasswordError:
+        return jsonify({"message": "Non conforming password"}), 401
+    except ValueError:
+        return jsonify({"message": "Empty email"}), 401
     else:
-        return jsonify({"message": "Error al guardar el coso"}), 500
+        if saved_student.id:
+            return jsonify({"message": f"Student {saved_student.email} successfully saved"}), 200
+        else:
+            return jsonify({"message": "Integrity error: email or enrollment_number duplicated."}), 500
 
 @auth_routes_bp.route('/login', methods=['POST'])
 def login():

@@ -6,13 +6,18 @@ from flask_jwt_extended import create_access_token
 
 from src.models.user import User, Student, Professor
 from src.repositories.user_repository import UserRepository
+from mysql.connector.errors import IntegrityError
+from src.db import DbError
 
 class AuthPasswordError(Exception):
     pass
 
 class AuthService:
     def __init__(self, db):
-        self.user_repository = UserRepository(db.get_connection())
+        try:
+            self.user_repository = UserRepository(db.get_connection())
+        except DbError:
+            raise
 
     def login(self, user: User) -> tuple:
         saved_user = self.user_repository.get_user_by_email(user.email)
@@ -30,20 +35,19 @@ class AuthService:
             return '', ''
 
     def create_student(self, student: Student):
-        # TODO: validacion de datos de entrada
         if not student.email:
-            return '', ''
+            raise ValueError(f"Email empty.")
         # Validar requisitos de contraseña (8-16 caracteres, una mayúscula y un número)
         if not (len(student.password) > 8 and len(student.password) < 16):
-            raise AuthPasswordError("Contraseña ")
-
+            raise AuthPasswordError(f"Non conforming password. Password length: {len(student.password)}")
         try:
             student.password = bcrypt.hashpw(student.password.encode("utf-8"), bcrypt.gensalt())
             saved_student = self.user_repository.create_student(student)
-        except Exception as err:
-            print("!! ERROR al crear estudiante: devolvemos el mismo estudiante q llego", err)
+        except IntegrityError as err:
+            # devolver el mismo student, sin id
             return student
         else:
+            # devolver el estudiante guardado con su id
             return saved_student
 
     def get_student(self, user_id: int) -> Student:
