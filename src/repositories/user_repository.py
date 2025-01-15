@@ -150,6 +150,7 @@ class UserRepository:
         except:
             raise
 
+<<<<<<< Updated upstream
     def create_student(self, student: Student) -> Student:
         """Llama al procedimiento almacenado para crear un estudiante."""
         try:
@@ -176,3 +177,6 @@ class UserRepository:
             student.id = res[-1]
             student.password = None
             return student
+=======
+    
+>>>>>>> Stashed changes
