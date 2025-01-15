@@ -9,13 +9,15 @@ from src.repositories.user_repository import UserRepository
 from mysql.connector.errors import IntegrityError
 from src.db import DbError
 
+
 class AuthPasswordError(Exception):
     pass
+
 
 class AuthService:
     def __init__(self, db):
         try:
-            self.user_repository = UserRepository(db.get_connection())
+            self.user_repository = UserRepository(db)
         except DbError:
             raise
 
@@ -26,22 +28,41 @@ class AuthService:
         if bcrypt.checkpw(user_pass_bytes, saved_user.password):
             # login correcto obtener token
             if isinstance(saved_user, Student):
-                return create_access_token(json.dumps({"user_id": saved_user.user_id,
-                                                        "role": "student"})), "student"
+                return (
+                    create_access_token(
+                        json.dumps(
+                            {"user_id": saved_user.user_id, "role": "student"}
+                        )
+                    ),
+                    "student",
+                )
             elif isinstance(saved_user, Professor):
-                return create_access_token(json.dumps({"user_id": saved_user.user_id,
-                                                        "role": "professor" })), "professor"
+                return (
+                    create_access_token(
+                        json.dumps(
+                            {
+                                "user_id": saved_user.user_id,
+                                "role": "professor",
+                            }
+                        )
+                    ),
+                    "professor",
+                )
         else:
-            return '', ''
+            return "", ""
 
     def create_student(self, student: Student):
         if not student.email:
             raise ValueError(f"Email empty.")
         # Validar requisitos de contraseña (8-16 caracteres, una mayúscula y un número)
         if not (len(student.password) > 8 and len(student.password) < 16):
-            raise AuthPasswordError(f"Non conforming password. Password length: {len(student.password)}")
+            raise AuthPasswordError(
+                f"Non conforming password. Password length: {len(student.password)}"
+            )
         try:
-            student.password = bcrypt.hashpw(student.password.encode("utf-8"), bcrypt.gensalt())
+            student.password = bcrypt.hashpw(
+                student.password.encode("utf-8"), bcrypt.gensalt()
+            )
             saved_student = self.user_repository.create_student(student)
         except IntegrityError as err:
             # devolver el mismo student, sin id
@@ -54,5 +75,12 @@ class AuthService:
         student = self.user_repository.get_user_by_id(user_id)
         if isinstance(student, Student):
             return student
+        else:
+            return None
+
+    def get_professor(self, user_id: int) -> Professor:
+        professor = self.user_repository.get_user_by_id(user_id)
+        if isinstance(professor, Professor):
+            return professor
         else:
             return None
