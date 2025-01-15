@@ -4,17 +4,20 @@ from mysql.connector.errors import IntegrityError
 
 
 class UserRepository:
-    def __init__(self, connection):
-        self.connection = connection
+    def __init__(self, db):
+        self.db = db
 
     def get_user_by_id(self, user_id: int) -> Union[Student, Professor]:
         """Obtiene un usuario por su id, ya sea estudiante o profesor."""
 
         try:
-            with self.connection as conn:
+            with self.db.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT u.id AS user_id, u.email, s.id AS student_id, p.id AS professor_id,
+                    u.email, u.first_name, u.last_name, u.created_at,
+                    s.enrollment_number, s.major, s.enrolled_at,
+                    p.department, p.specialty,
                     CASE WHEN s.id IS NOT NULL THEN TRUE ELSE FALSE END AS is_student
                 FROM users u
                 LEFT JOIN students s ON u.id = s.user_id
@@ -28,11 +31,22 @@ class UserRepository:
                         user = Student(
                             id=result["student_id"],
                             user_id=result["user_id"],
+                            first_name=result["first_name"],
+                            last_name=result["last_name"],
+                            enrollment_number=result["enrollment_number"],
+                            major=result["major"],
+                            enrolled_at=result["enrolled_at"],
+                            created_at=result["created_at"],
                         )
                     else:
                         user = Professor(
                             id=result["professor_id"],
                             user_id=result["user_id"],
+                            first_name=result["first_name"],
+                            last_name=result["last_name"],
+                            department=result["department"],
+                            specialty=result["specialty"],
+                            created_at=result["created_at"],
                         )
                     user.email = result["email"]
                     return user
@@ -44,7 +58,7 @@ class UserRepository:
         """Obtiene un usuario por su email, ya sea estudiante o profesor."""
 
         try:
-            with self.connection as conn:
+            with self.db.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT u.id AS user_id, u.password, s.id AS student_id, p.id AS professor_id,
@@ -83,7 +97,7 @@ class UserRepository:
             list: Lista de estudiantes.
         """
         try:
-            with self.connection as conn:
+            with self.db.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT s.*, u.email, u.first_name, u.last_name, u.created_at
@@ -123,7 +137,7 @@ class UserRepository:
             list: Lista de profesores.
         """
         try:
-            with self.connection as conn:
+            with self.db.get_connection() as conn:
                 cursor = conn.cursor(dictionary=True)
                 query = """
                 SELECT p.*, u.email, u.first_name, u.last_name, u.created_at
@@ -156,7 +170,7 @@ class UserRepository:
 
     def create_student(self, student: Student) -> Student:
         """Llama al procedimiento almacenado para crear un estudiante."""
-        with self.connection as conn:
+        with self.db.get_connection() as conn:
             try:
                 cursor = conn.cursor()
                 res = cursor.callproc(
@@ -173,10 +187,10 @@ class UserRepository:
                     ),
                 )
             except IntegrityError:
-                self.connection.rollback()
+                conn.rollback()
                 raise
             else:
-                self.connection.commit()
+                conn.commit()
                 student.id = res[-1]
                 student.password = None
                 return student
