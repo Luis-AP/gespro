@@ -44,20 +44,6 @@ def create_app():
 
     app.db = Database(class_config)
 
-    with app.db.get_connection() as connection:
-        with connection.cursor() as cursor:
-            print(class_config.DB_NAME)
-            cursor.execute("""
-                SELECT ROUTINE_NAME, ROUTINE_TYPE, ROUTINE_SCHEMA
-                FROM information_schema.ROUTINES
-                WHERE ROUTINE_SCHEMA = %s
-            """, (class_config.DB_NAME,))
-            procedures = cursor.fetchall()
-            print("\nStored Procedures in database:")
-            for proc in procedures:
-                print(f"- {proc[0]} ({proc[1]}) in schema {proc[2]}")
-            print("\n")
-
     # Register routes
 
     # app.register_blueprint(auth_routes)
