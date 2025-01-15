@@ -8,7 +8,7 @@ from flask_cors import CORS
 from src.utils.jwt_config import init_jwt
 from src.utils.error_handlers import register_error_handlers
 from src.controllers.auth_controller import auth_routes_bp
-
+from src.controllers.activity_controller import activity_routes_bp
 
 load_dotenv()
 
@@ -46,6 +46,7 @@ def create_app():
 
     # app.register_blueprint(auth_routes)
     app.register_blueprint(auth_routes_bp)
+    app.register_blueprint(activity_routes_bp)
 
     @app.route("/")
     def home():
