@@ -19,6 +19,7 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hora en segundos
 
+
 class ProductionConfig(Config):
     """Production configuration."""
 
@@ -34,5 +35,9 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     """Testing configuration."""
 
-    DB_HOST = "localhost"
+    DB_HOST = os.getenv("TEST_DB_HOST")
+    DB_PORT = os.getenv("TEST_DB_PORT")
+    DB_USER = os.getenv("TEST_DB_USER")
+    DB_PASSWORD = os.getenv("TEST_DB_PASSWORD")
+    DB_NAME = os.getenv("TEST_DB_NAME")
     TESTING = True
