@@ -26,31 +26,31 @@ class AuthService:
             saved_user = self.user_repository.get_user_by_email(user.email)
             
             if not saved_user:
-                return None, "INVALID_CREDENTIALS"
+                return None, "INVALID_CREDENTIALS", None, None
                 
-            # Segunda validación: contraseña correcta    
+            # Segunda validación: contraseña correcta
             user_pass_bytes = user.password.encode("utf-8")
             if not bcrypt.checkpw(user_pass_bytes, saved_user.password):
-                return None, "INVALID_CREDENTIALS"
+                return None, "INVALID_CREDENTIALS", None, None
             
             # Si las credenciales son correctas
             if isinstance(saved_user, Student):
                 token = create_access_token(
                     json.dumps(
-                        {"user_id": saved_user.user_id, "role": "student"}
+                        {"user_id": saved_user.user_id, "role": "student", "student_id": saved_user.id}
                     )
                 )
-                return token, "student"
+                return token, "student", None, saved_user.id
             elif isinstance(saved_user, Professor):
                 token = create_access_token(
                     json.dumps(
-                        {"user_id": saved_user.user_id, "role": "professor"}
+                        {"user_id": saved_user.user_id, "role": "professor", "professor_id": saved_user.id}
                     )
                 )
-                return token, "professor"
+                return token, "professor", saved_user.id, None
                 
         except Exception as e:
-            return None, "SERVER_ERROR"
+            return None, "SERVER_ERROR", None, None
 
     def create_student(self, student: Student):
         if not student.email:
