@@ -15,7 +15,7 @@ def init_jwt(app):
         return {
             "role": json_identity.get("role", "student"),
             "user_id": json_identity.get("user_id"),
-            "stundet_id": json_identity.get("student_id"),
+            "student_id": json_identity.get("student_id"),
             "professor_id": json_identity.get("professor_id"),
         }
     
