@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, make_response
 from dotenv import load_dotenv
 import os
 from config import *
@@ -20,7 +20,23 @@ def create_app():
     """Application factory function."""
     app = Flask(__name__)
     # Enable CORS for all domains
-    CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": ["*"],
+                "methods": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE",
+                    "OPTIONS",
+                ],
+                "allow_headers": ["Content-Type", "Authorization"],
+            }
+        },
+    )
 
     # Load the configuration
     env = os.getenv("FLASK_ENV", "development").lower()
