@@ -12,12 +12,8 @@ class ActivityOwnerError(Exception):
 
 class ActivityService:
     def __init__(self, db):
-        try:
-            self.activity_repository = ActivityRepository(db)
-            self.user_repository = UserRepository(db)
-        except DbError as err:
-            app.logging.critical("")
-            raise
+        self.activity_repository = ActivityRepository(db)
+        self.user_repository = UserRepository(db)
 
     def get_activities(self, professor_id=None):
         """Obtiene todas las actividades, filtrando por professor_id si existe."""
