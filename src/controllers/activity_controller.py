@@ -47,10 +47,10 @@ def create_activity():
     claims = get_jwt()
     if claims["role"] != "professor":
         abort(403)
-    activity = Activity(name=request.form.get("name"),
-                        description=request.form.get("description"),
-                        due_date=request.form.get("due_date"),
-                        min_grade=request.form.get("min_grade"),
+    activity = Activity(name=request.json.get("name"),
+                        description=request.json.get("description"),
+                        due_date=request.json.get("due_date"),
+                        min_grade=request.json.get("min_grade"),
                         professor_id=claims["professor_id"])
     try:
         activity = ActivityService(app.db).create(activity)
@@ -76,10 +76,10 @@ def update_activity(activity_id: int):
     if claims["role"] != "professor":
         abort(403)
     activity = Activity(id=activity_id,
-                        name=request.form.get("name"),
-                        description=request.form.get("description"),
-                        due_date=request.form.get("due_date"),
-                        min_grade=request.form.get("min_grade"),
+                        name=request.json.get("name"),
+                        description=request.json.get("description"),
+                        due_date=request.json.get("due_date"),
+                        min_grade=request.json.get("min_grade"),
                         professor_id=claims["professor_id"])
     try:
         activity = ActivityService(app.db).update(activity)
