@@ -1,17 +1,19 @@
 from datetime import datetime
 
+from mysql.connector.errors import Error
+
 from src.models.activity import Activity
-from typing import Union
-from mysql.connector.errors import IntegrityError
+from src.db import Database
 
 class ActivityRepository:
-    def __init__(self, db):
+    def __init__(self, db: Database):
         self.db = db
 
     def find_all(self) -> list[dict]:
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM activities")
+            # TODO: ordenar por apellido de profesor
+            cursor.execute("SELECT * FROM activities ORDER BY professor_id, created_at DESC")
             result = cursor.fetchall()
             return result
 
@@ -25,7 +27,7 @@ class ActivityRepository:
             else:
                 return Activity(id=None)
 
-    def find_by_name(self, name):
+    def find_by_name(self, name) -> list[Activity]:
         """Buscar actividades por nombre.
 
         Se utilizan los comodines %name%, con LIKE.
@@ -33,7 +35,8 @@ class ActivityRepository:
         name = f"%{name}%"
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM activities WHERE name LIKE %s", (name,))
+            cursor.execute("SELECT * FROM activities WHERE name LIKE %s ORDER BY created_at DESC",
+                           (name,))
             result = cursor.fetchall()
             if result:
                 activities = []
@@ -44,15 +47,16 @@ class ActivityRepository:
             else:
                 return []
 
-    def find_by_professor(self, professor_id):
+    def find_by_professor(self, professor_id) -> list[dict]:
         """Buscar todas las actividades de un professor."""
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM activities WHERE professor_id = %s", (professor_id,))
+            cursor.execute("SELECT * FROM activities WHERE professor_id = %s ORDER BY created_at DESC",
+                           (professor_id,))
             result = cursor.fetchall()
             return result
 
-    def find_by_due_date(self, due_date: datetime):
+    def find_by_due_date(self, due_date: datetime) -> list[dict]:
         """Buscar actividades por fecha de entrega.
 
         Se asume due_date del tipo datetime.datetime y al buscar
@@ -60,11 +64,12 @@ class ActivityRepository:
         """
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM activities WHERE due_date = %s", (due_date.date,))
+            cursor.execute("SELECT * FROM activities WHERE due_date = %s ORDER BY created_at DESC",
+                           (due_date.date,))
             result = cursor.fetchall()
             return result
 
-    def save(self, activity: Activity):
+    def save(self, activity: Activity) -> Activity:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             try:
@@ -75,49 +80,50 @@ class ActivityRepository:
                                        activity.min_grade,
                                        activity.professor_id,
                                        None))
-            except IntegrityError:
+            except Error:
                 conn.rollback()
                 raise
             else:
                 conn.commit()
                 activity.id = res[-1]
-                return activity
+                return self.find_by_id(activity.id)
 
-    def update(self, activity: Activity):
+    def update(self, activity: Activity) -> Activity:
         """Actualizar datos de una actividad.
 
         Por defecto no se actualiza el id del professor
         que creo la actividad originalmente.
         """
         query = """UPDATE activities
-                    SET name = %s, description = %s, due_date = %s, min_grade = %s
-                    WHERE id = %s"""
+                   SET name = %s, description = %s, due_date = %s, min_grade = %s
+                   WHERE id = %s"""
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute(query, (activity.name,
-                                        activity.description,
-                                        activity.due_date,
-                                        activity.min_grade,
-                                        activity.id))
-            except IntegrityError:
+                                       activity.description,
+                                       activity.due_date,
+                                       activity.min_grade,
+                                       activity.id))
+            except Error:
                 conn.rollback()
                 raise
             else:
                 conn.commit()
+                return self.find_by_id(activity.id)
 
-    def delete(self, activity: Activity):
+    def delete(self, activity_id: int) -> None:
         """Eliminar una actividad.
 
         Asume que se pasa una actividad con un id valido.
         Aunque puede no existir.
         """
-        query = "DELETE FROM activities WHERE id = %s"
+        query = "DELETE FROM activities WHERE id = %s AND due_date > current_date()"
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             try:
-                cursor.execute(query, (activity.id,))
-            except IntegrityError:
+                cursor.execute(query, (activity_id,))
+            except Error:
                 conn.rollback()
                 raise
             else:
