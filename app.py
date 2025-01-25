@@ -1,10 +1,12 @@
-from flask import Flask
-from dotenv import load_dotenv
 import os
+
+from flask import Flask
+from flask_cors import CORS
+
+from dotenv import load_dotenv
 from config import *
 from src.db import Database
 from src.controllers import *
-from flask_cors import CORS
 from src.utils.jwt_config import init_jwt
 from src.utils.error_handlers import register_error_handlers
 from src.controllers.auth_controller import auth_routes_bp
@@ -41,7 +43,7 @@ def create_app():
     # Load the configuration
     env = os.getenv("FLASK_ENV", "development").lower()
 
-    print(f"Running in {env} mode")
+    app.logger.info("Running in %s environment", env)
 
     class_config = {
         "production": ProductionConfig,
