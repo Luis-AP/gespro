@@ -11,6 +11,7 @@ from src.controllers.auth_controller import auth_routes_bp
 from src.controllers.activity_controller import activity_routes_bp
 from src.controllers.student_controller import student_routes_bp
 from src.controllers.professor_controller import professor_routes_bp
+from src.controllers.project_controller import project_routes_bp
 
 load_dotenv()
 
@@ -51,6 +52,7 @@ def create_app():
     app.register_blueprint(activity_routes_bp)
     app.register_blueprint(student_routes_bp)
     app.register_blueprint(professor_routes_bp)
+    app.register_blueprint(project_routes_bp)
 
     @app.route("/")
     def home():
