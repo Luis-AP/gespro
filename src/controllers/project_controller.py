@@ -2,7 +2,7 @@ from flask import request, jsonify, abort, Blueprint
 from flask import current_app as app
 from flask_jwt_extended import jwt_required, get_jwt
 
-from src.services.project_service import ProjectService, ProjectServiceError
+from src.services.project_service import ProjectService, ProjectServiceError, ProjectValueError
 
 project_routes_bp = Blueprint('project_bp', __name__, url_prefix="/api/projects")
 
@@ -23,8 +23,10 @@ def create_project():
         project = ProjectService(app.db).create_project(project_data, claims.get("student_id"))
         return jsonify({"message": f"Project {project.title} created successfully", "id": project.id}), 201
         
-    except ProjectServiceError as e:
+    except ProjectValueError as e:
         return jsonify({"message": str(e)}), 401
+    except ProjectServiceError as e:
+        return jsonify({"message": str(e)}), 403
     except Exception as e:
         app.logger.error(f"Error creating project: {str(e)}")
         abort(500)
@@ -34,7 +36,7 @@ def create_project():
 def add_member(project_id):
     claims = get_jwt()
     if claims.get("role") != "student":
-        return jsonify({"message": "Only students can be added to projects"}), 403
+        return jsonify({"message": "Only students can add members to projects"}), 403
 
     try:
         member = ProjectService(app.db).add_member(
@@ -43,10 +45,12 @@ def add_member(project_id):
             requesting_student_id=claims.get("student_id")
         )
         return jsonify({"message": "Member added successfully", "id": member.id}), 201
-    except ProjectServiceError as e:
+    except ProjectValueError as e:
         return jsonify({"message": str(e)}), 401
+    except ProjectServiceError as e:
+        return jsonify({"message": str(e)}), 403
     except Exception as e:
-        app.logger.error(f"Error adding member: {str(e)}")
+        app.logger.error("Error adding member: %s", e)
         abort(500)
 
 @project_routes_bp.route("/", methods=["GET"])

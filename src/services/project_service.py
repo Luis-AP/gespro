@@ -8,6 +8,9 @@ from src.repositories.user_repository import UserRepository
 class ProjectServiceError(Exception):
     pass
 
+class ProjectValueError(ProjectServiceError):
+    pass
+
 class ProjectService:
     def __init__(self, db):
         self.db = db
@@ -19,15 +22,15 @@ class ProjectService:
         # Validar que la actividad existe
         activity = self.activity_repository.find_by_id(project_data['activity_id'])
         if not activity.id:
-            raise ProjectServiceError("Activity not found")
+            raise ProjectValueError("Activity not found")
 
         # Validar fecha límite
         if datetime.now() > activity.due_date:
-            raise ProjectServiceError("Activity deadline has passed")
+            raise ProjectValueError("Activity deadline has passed")
 
         # Validar URL del repositorio
         if not self._validate_repository_url(project_data['repository_url']):
-            raise ProjectServiceError("Invalid repository URL format")
+            raise ProjectValueError("Invalid repository URL format")
 
         # Crear proyecto
         project = Project(**project_data)
@@ -48,26 +51,19 @@ class ProjectService:
         # Validar fecha límite
         activity = self.activity_repository.find_by_id(project.activity_id)
         if datetime.now() > activity.due_date:
-            raise ProjectServiceError("Activity deadline has passed")
-
+            raise ProjectValueError("Activity deadline has passed")
         try:
-            return self.project_repository.add_member(student_id, project_id)
+            member = self.project_repository.add_member(student_id, project_id)
+            if member is None:
+                raise ProjectServiceError("The ID doesn't belong to any student")
+            return member
         except ProjectError as e:
             raise ProjectServiceError(str(e))
 
     def get_projects(self, filters: dict = None) -> list[dict]:
-        if not filters:
-            raise ProjectServiceError("Must provide student_id or professor_id filter")
-            
-        if not ('student_id' in filters or 'professor_id' in filters):
-            raise ProjectServiceError("Must specify either student_id or professor_id")
-
         projects = self.project_repository.find_projects_with_details(filters)
         for project in projects:
-            if project['member_ids']:
-                project['member_ids'] = [int(id) for id in project['member_ids'].split(',')]
-            else:
-                project['member_ids'] = []
+            project['member_ids'] = [int(id) for id in project['member_ids'].split(',')]
         return projects
 
     def _validate_repository_url(self, url: str) -> bool:

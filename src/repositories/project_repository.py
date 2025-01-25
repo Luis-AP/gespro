@@ -2,6 +2,7 @@ from src.models.project import Project
 from src.models.member import Member
 from mysql.connector.errors import IntegrityError
 from mysql.connector.errors import DatabaseError
+from mysql.connector.errors import Error
 
 class ProjectError(Exception):
     pass
@@ -112,7 +113,13 @@ class ProjectRepository:
                 conn.rollback()
                 if e.errno == 1644:  # SQLSTATE '45000'
                     raise ProjectError("Student already participates in a project for this activity")
-                raise IntegrityError from e
+            except IntegrityError:
+                conn.rollback()
+                raise ProjectError("The ID doesn't belong to any student")
+            except Error as e:
+                conn.rollback()
+                raise
+
 
     def update_status(self, project_id: int, status: str):
         with self.db.get_connection() as conn:
