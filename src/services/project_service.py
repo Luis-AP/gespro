@@ -60,6 +60,27 @@ class ProjectService:
         except ProjectError as e:
             raise ProjectServiceError(str(e))
 
+    def remove_member(self, project_id: int, student_id: int, requesting_student_id: int) -> None:
+        project = self.project_repository.find_by_id(project_id)
+        if not project.id:
+            raise ProjectServiceError("Project not found")
+
+        if not self.project_repository.is_project_owner(project_id, requesting_student_id):
+            raise ProjectServiceError("Only project owner can remove members")
+
+        # Validar que el miembro pertenezca al proyecto
+        if not self.project_repository.validate_member(student_id, project_id):
+            raise ProjectValueError("Member not found in project")
+            
+        # No se puede remover al dueño del proyecto
+        if self.project_repository.is_project_owner(project_id, student_id):
+            raise ProjectValueError("Cannot remove project owner")
+
+        try:
+            self.project_repository.remove_student_from_project(student_id, project_id)
+        except ProjectError as e:
+            raise ProjectServiceError(str(e))
+        
     def get_projects(self, filters: dict = None) -> list[dict]:
         projects = self.project_repository.find_projects_with_details(filters)
         for project in projects:

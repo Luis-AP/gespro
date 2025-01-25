@@ -97,6 +97,15 @@ class ProjectRepository:
             )
             return cursor.fetchone() is not None
 
+    def validate_member(self, student_id: int, project_id: int) -> bool:
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT 1 FROM members WHERE student_id = %s AND project_id = %s",
+                (student_id, project_id)
+            )
+            return cursor.fetchone() is not None
+
     def add_member(self, student_id: int, project_id: int) -> Member:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
@@ -120,6 +129,29 @@ class ProjectRepository:
                 conn.rollback()
                 raise
 
+    def remove_student_from_project(self, student_id: int, project_id: int) -> None:
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    "DELETE FROM members WHERE student_id = %s AND project_id = %s",
+                    (student_id, project_id)
+                )
+                
+                # Si solo queda un miembro en el proyecto, se convierte en un proyecto individual
+                cursor.execute("""
+                    UPDATE projects p
+                    SET is_group = CASE 
+                        WHEN (SELECT COUNT(*) FROM members m WHERE m.project_id = p.id) <= 1 THEN 0
+                        ELSE 1
+                    END
+                    WHERE id = %s
+                """, (project_id,))
+                
+                conn.commit()
+            except IntegrityError:
+                conn.rollback()
+                raise ProjectError("Cannot remove student from project")
 
     def update_status(self, project_id: int, status: str):
         with self.db.get_connection() as conn:

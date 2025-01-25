@@ -33,7 +33,7 @@ def create_project():
 
 @project_routes_bp.route("/<int:project_id>/members", methods=["POST"])
 @jwt_required()
-def add_member(project_id):
+def add_member(project_id: int):
     claims = get_jwt()
     if claims.get("role") != "student":
         return jsonify({"message": "Only students can add members to projects"}), 403
@@ -74,4 +74,26 @@ def get_projects():
         return jsonify(projects), 200
     except Exception as e:
         app.logger.error(f"Error retrieving projects: {str(e)}")
+        abort(500)
+
+@project_routes_bp.route("/<int:project_id>/members/<int:student_id>", methods=["DELETE"])
+@jwt_required()
+def remove_member(project_id: int, student_id: int):
+    claims = get_jwt()
+    if claims.get("role") != "student":
+        return jsonify({"message": "Only students can remove members from projects"}), 403
+
+    try:
+        ProjectService(app.db).remove_member(
+            project_id=project_id,
+            student_id=student_id,
+            requesting_student_id=claims.get("student_id")
+        )
+        return jsonify({"message": "Member removed successfully"}), 200
+    except ProjectValueError as e:
+        return jsonify({"message": str(e)}), 401
+    except ProjectServiceError as e:
+        return jsonify({"message": str(e)}), 403
+    except Exception as e:
+        app.logger.error("Error removing member: %s", e)
         abort(500)
