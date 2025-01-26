@@ -178,3 +178,29 @@ class ProjectRepository:
             except IntegrityError:
                 conn.rollback()
                 raise
+
+    def update(self, project: Project) -> Project:
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    "UPDATE projects SET title = %s, repository_url = %s WHERE id = %s",
+                    (project.title, project.repository_url, project.id)
+                )
+            except Error:
+                conn.rollback()
+                raise ProjectError("Error updating project")
+            else:
+                conn.commit()
+                return self.find_by_id(project.id)
+
+    def delete(self, project_id: int) -> None:
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute("DELETE FROM projects WHERE id = %s", (project_id,))
+            except Error:
+                conn.rollback()
+                raise ProjectError("Error deleting project")
+            else:
+                conn.commit()
