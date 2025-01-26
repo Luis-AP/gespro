@@ -119,3 +119,22 @@ def delete_activity(activity_id):
         abort(500)
     else:
         return '', 204
+
+@activity_routes_bp.route("/<int:activity_id>/grades", methods=["GET"])
+@jwt_required()
+def activity_grades(activity_id):
+    """Obtener listado de calificaciones de proyectos de una actividad"""
+    claims = get_jwt()
+    if claims["role"] != "professor":
+        abort(403)
+    try:
+        projects = ActivityService(app.db).get_grades(activity_id, claims["professor_id"])
+    except ValueError as err:
+        return jsonify({"message": f"Value error. {err}"}), 422
+    except ActivityOwnerError as err:
+        return jsonify({"message": f"Unable to delete. {err}"}), 403
+    except Error as err:
+        app.logger.error("MySQL error. %s - %s", err.errno, err.msg)
+        abort(500)
+    else:
+        return jsonify(projects), 200

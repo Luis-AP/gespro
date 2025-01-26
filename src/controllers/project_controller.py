@@ -97,3 +97,23 @@ def remove_member(project_id: int, student_id: int):
     except Exception as e:
         app.logger.error("Error removing member: %s", e)
         abort(500)
+
+@project_routes_bp.route("/<int:project_id>/grades", methods=["POST"])
+@jwt_required()
+def grade(project_id):
+    """Calificar un proyecto."""
+    claims = get_jwt()
+    if claims["role"] != "professor":
+        abort(403)
+    grade = request.json.get("grade")
+    if grade is None:
+        abort(400)
+    try:
+        graded = ProjectService(app.db).grade(project_id, claims["professor_id"], grade)
+    except ValueError as err:
+        return jsonify({"message": f"{err}"}), 422
+    except Exception as err:
+        app.logger.error("MySQL error. %s - %s", err.errno, err.msg)
+        abort(500)
+    else:
+        return jsonify(graded), 200

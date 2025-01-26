@@ -91,3 +91,35 @@ class ProjectService:
         # Validar formato básico de URL de Git
         git_url_pattern = r'^(https?:\/\/)?(www\.)?([\w\d\-]+)\.([\w]+)\/([\w\d\-_]+)\/([\w\d\-_]+)(\.git)?\/?$'
         return bool(re.match(git_url_pattern, url))
+
+    def grade(self, project_id: int, professor_id: int, grade: str) -> Project:
+        """Llamar a calificar un proyecto.
+
+        Revisar si el proyecto existe
+        Revisar si el profesor es el creador de la actividad.
+        Revisar que haya pasado la due_date de la actividad.
+        Revisar si la nota está entre 0 y 10.
+        """
+        project = self.project_repository.find_by_id(project_id)
+        if project.id is None:
+            raise ValueError("Project doesn't exist.")
+        activity = self.activity_repository.find_by_id(project.activity_id)
+        if activity.id:
+            if professor_id != activity.professor_id:
+                raise ValueError("Project's Activity doesn't belong to professor.")
+            else:
+                if activity.due_date.date() >= datetime.today().date():
+                    raise ValueError("Cannot grade. Activity still OPEN.")
+
+                try:
+                    grade = float(grade)
+                except ValueError:
+                    raise ValueError("Bad grade.")
+                else:
+                    if 0.0 <= grade <= 10.0:
+                        return self.project_repository.update_grade(project.id, grade)
+                    else:
+                        raise ValueError("Bad grade.")
+        else:
+            # thisi is highly unusual
+            raise RuntimeError("FK error between project & activity?")
