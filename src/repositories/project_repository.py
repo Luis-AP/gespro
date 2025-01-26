@@ -79,14 +79,15 @@ class ProjectRepository:
                      project.activity_id,
                      student_id,
                      None))
-                conn.commit()
-                project.id = res[-1]
-                return project
             except DatabaseError as e:
                 conn.rollback()
                 if e.errno == 1644:  # SQLSTATE '45000'
                     raise ProjectError("Student already participates in a project for this activity")
                 raise IntegrityError from e
+            else:
+                conn.commit()
+                project = self.find_by_id(res[-1])  # Check if project was created
+                return project
 
     def is_project_owner(self, project_id: int, student_id: int) -> bool:
         with self.db.get_connection() as conn:
