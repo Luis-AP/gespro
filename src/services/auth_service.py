@@ -80,3 +80,12 @@ class AuthService:
             return professor
         else:
             return None
+        
+    def search_students(self, search_term: str) -> list:
+        return self.user_repository.search_students(search_term)
+
+    def get_student_by_student_id(self, student_id: int) -> Student:
+        return self.user_repository.get_student_by_student_id(student_id)
+
+    def get_professor_by_professor_id(self, professor_id: int) -> Professor:
+        return self.user_repository.get_professor_by_professor_id(professor_id)

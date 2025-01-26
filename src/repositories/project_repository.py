@@ -34,7 +34,7 @@ class ProjectRepository:
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             query = """
-                SELECT p.*, a.name as activity_name, a.due_date,
+                SELECT p.*, a.name as activity_name, a.due_date, a.professor_id,
                        GROUP_CONCAT(DISTINCT m2.student_id) as member_ids
                 FROM projects p
                 JOIN activities a ON p.activity_id = a.id
@@ -86,7 +86,7 @@ class ProjectRepository:
                 raise IntegrityError from e
             else:
                 conn.commit()
-                project = self.find_by_id(res[-1])  # Check if project was created
+                project = self.find_by_id(res[-1])
                 return project
 
     def is_project_owner(self, project_id: int, student_id: int) -> bool:
@@ -179,7 +179,7 @@ class ProjectRepository:
             except IntegrityError:
                 conn.rollback()
                 raise
-    
+
     def update(self, project: Project) -> Project:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
@@ -194,7 +194,7 @@ class ProjectRepository:
             else:
                 conn.commit()
                 return self.find_by_id(project.id)
-    
+
     def delete(self, project_id: int) -> None:
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
