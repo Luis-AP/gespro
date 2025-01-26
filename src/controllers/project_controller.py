@@ -3,6 +3,7 @@ from flask import current_app as app
 from flask_jwt_extended import jwt_required, get_jwt
 
 from src.services.project_service import ProjectService, ProjectServiceError, ProjectValueError
+from src.models.project import Project
 
 project_routes_bp = Blueprint('project_bp', __name__, url_prefix="/api/projects")
 
@@ -97,3 +98,51 @@ def remove_member(project_id: int, student_id: int):
     except Exception as e:
         app.logger.error("Error removing member: %s", e)
         abort(500)
+
+@project_routes_bp.route("/<int:project_id>", methods=["PATCH"])
+@jwt_required()
+def update_project(project_id: int):
+    claims = get_jwt()
+    if claims["role"] != "student":
+        abort(403)
+
+    project = Project(
+        id=project_id,
+        title=request.json.get("title"),
+        repository_url=request.json.get("repository_url"),
+    )
+
+    student_id = claims["student_id"]
+    try:
+        project = ProjectService(app.db).update(project, student_id)
+    except ProjectValueError as e:
+        return jsonify({"message": str(e)}), 422
+    except ProjectServiceError as e:
+        abort(403)
+    except Exception as e:
+        app.logger.error(f"Error updating project: {str(e)}")
+        abort(500)
+    else:
+        if project.id:
+            return jsonify(project), 200
+        else:
+            abort(404)
+
+@project_routes_bp.route("/<int:project_id>", methods=["DELETE"])
+@jwt_required()
+def delete_project(project_id: int):
+    claims = get_jwt()
+    if claims["role"] != "student":
+        abort(403)
+
+    try:
+        ProjectService(app.db).delete(project_id, claims["student_id"])
+    except ProjectServiceError as e:
+        abort(403)
+    except ValueError:
+        abort(404)
+    except Exception as e:
+        app.logger.error(f"Error deleting project: {str(e)}")
+        abort(500)
+    else:
+        return "", 204

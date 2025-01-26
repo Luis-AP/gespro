@@ -91,3 +91,51 @@ class ProjectService:
         # Validar formato básico de URL de Git
         git_url_pattern = r'^(https?:\/\/)?(www\.)?([\w\d\-]+)\.([\w]+)\/([\w\d\-_]+)\/([\w\d\-_]+)(\.git)?\/?$'
         return bool(re.match(git_url_pattern, url))
+    
+    def update(self, project : Project, student_id: int) -> Project:
+        
+        og_project = self.project_repository.find_by_id(project.id)
+        if og_project.id is None:
+            return og_project
+        
+        # Validar que el estudiante es el dueño del proyecto
+        if not self.project_repository.is_project_owner(project.id, student_id):
+            raise ProjectServiceError("Only project owner can update project")
+        
+        # Validar fecha límite de la actividad
+        activity = self.activity_repository.find_by_id(og_project.activity_id)
+        if datetime.now() > activity.due_date:
+            raise ProjectServiceError("Cannot update project after activity deadline")
+        
+        # Validar URL del repositorio
+        if project.repository_url and not self._validate_repository_url(project.repository_url):
+            raise ProjectValueError("Invalid repository URL format")
+        
+        # Llenar campos faltantes con los originales
+        if project.title is None:
+            project.title = og_project.title
+        if project.repository_url is None:
+            project.repository_url = og_project.repository_url
+        
+        try:
+            return self.project_repository.update(project)
+        except ProjectError as e:
+            raise
+    
+    def delete(self, project_id: int, student_id: int) -> None:
+        """Elimina un proyecto, solo si existe y el estudiante es el dueño"""
+
+        project = self.project_repository.find_by_id(project_id)
+        if not project.id:
+            raise ValueError("Project not found")
+        
+        # Validar que el estudiante es el dueño del proyecto
+        if not self.project_repository.is_project_owner(project_id, student_id):
+            raise ProjectServiceError("Only project owner can delete project")
+        
+        # Validar fecha límite de la actividad
+        activity = self.activity_repository.find_by_id(project.activity_id)
+        if datetime.now() > activity.due_date:
+            raise ProjectServiceError("Cannot delete project after activity deadline")
+
+        self.project_repository.delete(project_id)
