@@ -4,6 +4,7 @@ from flask.json.provider import DefaultJSONProvider
 
 from src.models.activity import Activity
 from src.models.project import Project
+from src.models.user import Student, Professor
 
 
 class CustomJSONProvider(DefaultJSONProvider):
@@ -21,6 +22,15 @@ class CustomJSONProvider(DefaultJSONProvider):
         if isinstance(o, Project):
             o.created_at = o.created_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(o.created_at, datetime) else o.created_at
             o.updated_at = o.updated_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(o.updated_at, datetime) else o.updated_at
+            return o.__dict__
+
+        if isinstance(o, Student):
+            o.enrolled_at = o.enrolled_at.strftime("%Y-%m-%d") if isinstance(o.enrolled_at, datetime) else o.enrolled_at
+            o.created_at = o.created_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(o.created_at, datetime) else o.created_at
+            return o.__dict__
+
+        if isinstance(o, Professor):
+            o.created_at = o.created_at.strftime("%Y-%m-%d %H:%M:%S") if isinstance(o.created_at, datetime) else o.created_at
             return o.__dict__
 
         return super().default(o)
