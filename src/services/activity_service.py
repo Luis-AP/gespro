@@ -3,8 +3,9 @@ from datetime import datetime
 from flask import current_app as app
 
 from src.models.activity import Activity
+from src.models.project import Project
 from src.repositories.activity_repository import ActivityRepository
-from src.db import DbError
+from src.repositories.project_repository import ProjectRepository
 from src.repositories.user_repository import UserRepository
 
 class ActivityOwnerError(Exception):
@@ -13,6 +14,7 @@ class ActivityOwnerError(Exception):
 class ActivityService:
     def __init__(self, db):
         self.activity_repository = ActivityRepository(db)
+        self.project_repository = ProjectRepository(db)
         self.user_repository = UserRepository(db)
 
     def get_activities(self, professor_id=None):
@@ -93,7 +95,16 @@ class ActivityService:
             raise ValueError("Activity doesn't exist.")
         if professor_id != activity.professor_id:
             raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
-        if activity.due_date <= datetime.today():
+        if activity.due_date.date() < datetime.today().date():
             raise ValueError("Activity already due.")
 
         self.activity_repository.delete(activity.id)
+
+    def get_grades(self, activity_id: int, professor_id: int) -> list[Project]:
+        og_activity = self.activity_repository.find_by_id(activity_id)
+        app.logger.debug("og_activity: %s", og_activity)
+        if og_activity.id is None: # si la actividad no existe su id es None
+            raise ValueError("Activity doesn't exist.")
+        if professor_id != og_activity.professor_id:
+            raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
+        return [Project(**project) for project in self.project_repository.find_by_activity(activity_id)]
