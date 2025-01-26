@@ -54,7 +54,7 @@ class ActivityService:
     def update(self, activity: Activity) -> Activity:
         og_activity = self.activity_repository.find_by_id(activity.id)
         if og_activity.id is None: # si la actividad no existe su id es None
-            return activity
+            return og_activity
         if activity.professor_id != og_activity.professor_id:
             raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
         if activity.name is None:
