@@ -1,10 +1,11 @@
 from src.models.user import Student, Professor
 from typing import Union
 from mysql.connector.errors import IntegrityError
+from src.db import Database
 
 
 class UserRepository:
-    def __init__(self, db):
+    def __init__(self, db: Database):
         self.db = db
 
     def get_user_by_id(self, user_id: int) -> Union[Student, Professor]:
@@ -194,3 +195,14 @@ class UserRepository:
                 student.id = res[-1]
                 student.password = None
                 return student
+
+    def get_professor_by_id(self, professor_id: int) -> dict:
+        query = "SELECT * FROM professors WHERE id = %s"
+        with self.db.get_connection() as conn:
+            cur = conn.cursor(dictionary=True)
+            cur.execute(query, (professor_id,))
+            professor_data =cur.fetchone()
+            if professor_data:
+                return Professor(**professor_data)
+            else:
+                return None

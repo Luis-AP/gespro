@@ -1,13 +1,11 @@
 import json
 
 import bcrypt
-from flask import jsonify
 from flask_jwt_extended import create_access_token
+from mysql.connector.errors import IntegrityError
 
 from src.models.user import User, Student, Professor
 from src.repositories.user_repository import UserRepository
-from mysql.connector.errors import IntegrityError
-from src.db import DbError
 
 class AuthPasswordError(Exception):
     pass
@@ -15,10 +13,7 @@ class AuthPasswordError(Exception):
 
 class AuthService:
     def __init__(self, db):
-        try:
-            self.user_repository = UserRepository(db)
-        except DbError:
-            raise
+        self.user_repository = UserRepository(db)
 
     def login(self, user: User) -> tuple:
         try:
