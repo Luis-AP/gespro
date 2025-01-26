@@ -28,7 +28,6 @@ class ActivityRepository:
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM activities WHERE id = %s", (activity_id,))
             activity = cursor.fetchone()
-            app.logger.debug("activity: %s", activity)
             if activity:
                 return Activity(**activity)
             else:
