@@ -206,3 +206,58 @@ class UserRepository:
                 return Professor(**professor_data)
             else:
                 return None
+            
+    def search_students(self, search_term: str) -> list:
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor(dictionary=True)
+                query = """
+                SELECT s.*, u.email, u.first_name, u.last_name
+                FROM students s
+                JOIN users u ON s.user_id = u.id
+                WHERE u.first_name LIKE %s 
+                OR u.last_name LIKE %s 
+                OR u.email LIKE %s
+                """
+                search_pattern = f"%{search_term}%"
+                cursor.execute(query, (search_pattern, search_pattern, search_pattern))
+                results = cursor.fetchall()
+                return [Student(**r) for r in results]
+        except:
+            raise
+
+    def get_student_by_student_id(self, student_id: int) -> Student:
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor(dictionary=True)
+                query = """
+                SELECT s.*, u.email, u.first_name, u.last_name, u.created_at
+                FROM students s
+                JOIN users u ON s.user_id = u.id
+                WHERE s.id = %s
+                """
+                cursor.execute(query, (student_id,))
+                result = cursor.fetchone()
+                if result:
+                    return Student(**result)
+                return None
+        except:
+            raise
+
+    def get_professor_by_professor_id(self, professor_id: int) -> Professor:
+        try:
+            with self.db.get_connection() as conn:
+                cursor = conn.cursor(dictionary=True)
+                query = """
+                SELECT p.*, u.email, u.first_name, u.last_name, u.created_at
+                FROM professors p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.id = %s
+                """
+                cursor.execute(query, (professor_id,))
+                result = cursor.fetchone()
+                if result:
+                    return Professor(**result)
+                return None
+        except:
+            raise

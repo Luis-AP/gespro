@@ -5,6 +5,7 @@ from flask import Blueprint
 
 from src.models.user import Professor
 from src.services.auth_service import AuthService
+from flask_jwt_extended import jwt_required
 from src.db import DbError
 
 professor_routes_bp = Blueprint(
@@ -12,27 +13,13 @@ professor_routes_bp = Blueprint(
 )
 
 
-@professor_routes_bp.route("/<int:user_id>", methods=["GET"])
-def get_professor(user_id):
+@professor_routes_bp.route("/<int:professor_id>", methods=["GET"])
+@jwt_required()
+def get_professor_by_professor_id(professor_id):
     try:
-        professor = AuthService(app.db).get_professor(user_id)
+        professor = AuthService(app.db).get_professor_by_professor_id(professor_id)
+        if professor:
+            return jsonify(professor), 200
+        abort(404)
     except DbError:
         abort(500)
-    else:
-        if professor and isinstance(professor, Professor):
-            return (
-                jsonify(
-                    {
-                        "id": professor.id,
-                        "email": professor.email,
-                        "first_name": professor.first_name,
-                        "last_name": professor.last_name,
-                        "user_id": professor.user_id,
-                        "department": professor.department,
-                        "specialty": professor.specialty,
-                        "created_at": professor.created_at,
-                    }
-                ),
-                200,
-            )
-        abort(404)

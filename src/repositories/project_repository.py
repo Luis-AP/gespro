@@ -34,7 +34,7 @@ class ProjectRepository:
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             query = """
-                SELECT p.*, a.name as activity_name, a.due_date,
+                SELECT p.*, a.name as activity_name, a.due_date, a.professor_id,
                        GROUP_CONCAT(DISTINCT m2.student_id) as member_ids
                 FROM projects p
                 JOIN activities a ON p.activity_id = a.id
@@ -79,15 +79,14 @@ class ProjectRepository:
                      project.activity_id,
                      student_id,
                      None))
+                conn.commit()
+                project.id = res[-1]
+                return project
             except DatabaseError as e:
                 conn.rollback()
                 if e.errno == 1644:  # SQLSTATE '45000'
                     raise ProjectError("Student already participates in a project for this activity")
                 raise IntegrityError from e
-            else:
-                conn.commit()
-                project = self.find_by_id(res[-1])  # Check if project was created
-                return project
 
     def is_project_owner(self, project_id: int, student_id: int) -> bool:
         with self.db.get_connection() as conn:
@@ -179,29 +178,3 @@ class ProjectRepository:
             except IntegrityError:
                 conn.rollback()
                 raise
-    
-    def update(self, project: Project) -> Project:
-        with self.db.get_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(
-                    "UPDATE projects SET title = %s, repository_url = %s WHERE id = %s",
-                    (project.title, project.repository_url, project.id)
-                )
-            except Error:
-                conn.rollback()
-                raise ProjectError("Error updating project")
-            else:
-                conn.commit()
-                return self.find_by_id(project.id)
-    
-    def delete(self, project_id: int) -> None:
-        with self.db.get_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute("DELETE FROM projects WHERE id = %s", (project_id,))
-            except Error:
-                conn.rollback()
-                raise ProjectError("Error deleting project")
-            else:
-                conn.commit()
