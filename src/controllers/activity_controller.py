@@ -33,11 +33,9 @@ def get_activities():
 def get_activity(activity_id: int):
     """DEPRECATED. nadie me usa :("""
     app.logger.warning("Deprecation warning: get_activity. This endpoint might go away in the future.")
-    activity= ActivityRepository(app.db).find_by_id(activity_id)
+    activity = ActivityRepository(app.db).find_by_id(activity_id)
     if activity.id:
-        response = {"Deprecation warning": "This endpoint might go away in the future."}
-        response.update(activity.__dict__)
-        return jsonify(response), 200
+        return jsonify(activity), 200
     else:
         abort(404)
 
@@ -65,7 +63,7 @@ def create_activity():
         abort(500)
     else:
         if activity.id:
-            return jsonify(activity.__dict__), 200
+            return jsonify(activity), 200
         else:
             abort(500)
 
@@ -81,6 +79,7 @@ def update_activity(activity_id: int):
                         due_date=request.json.get("due_date"),
                         min_grade=request.json.get("min_grade"),
                         professor_id=claims["professor_id"])
+    app.logger.debug("activity: %s", activity)
     try:
         activity = ActivityService(app.db).update(activity)
     except ActivityOwnerError as err:
@@ -98,7 +97,10 @@ def update_activity(activity_id: int):
         if activity.id is None:
             abort(404)
         else:
-            return jsonify(activity.__dict__), 200
+            app.logger.debug("types of: due_date=%s, created_at=%s, updated_at=%s",
+                             type(activity.due_date), type(activity.created_at),
+                             type(activity.updated_at))
+            return jsonify(activity), 200
 
 @activity_routes_bp.route("/<int:activity_id>", methods=["DELETE"])
 @jwt_required()

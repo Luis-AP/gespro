@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from mysql.connector.errors import Error
+from flask import current_app as app
 
 from src.models.activity import Activity
 from src.db import Database
@@ -9,19 +10,25 @@ class ActivityRepository:
     def __init__(self, db: Database):
         self.db = db
 
-    def find_all(self) -> list[dict]:
+    def find_all(self) -> list[Activity]:
         with self.db.get_connection() as conn:
+            query = """SELECT a.id, a.name, a.description, a.due_date, a.min_grade, a.professor_id, a.created_at,
+                       a.updated_at, u.last_name, u.first_name
+                       FROM activities AS a INNER JOIN professors AS p
+                       ON a.professor_id = p.id
+                       INNER JOIN users AS u ON p.user_id = u.id
+                       ORDER BY u.last_name ASC, u.first_name ASC, created_at DESC"""
             cursor = conn.cursor(dictionary=True)
-            # TODO: ordenar por apellido de profesor
-            cursor.execute("SELECT * FROM activities ORDER BY professor_id, created_at DESC")
+            cursor.execute(query)
             result = cursor.fetchall()
-            return result
+            return [Activity(**activity) for activity in result]
 
     def find_by_id(self, activity_id: int) -> Activity:
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM activities WHERE id = %s", (activity_id,))
             activity = cursor.fetchone()
+            app.logger.debug("activity: %s", activity)
             if activity:
                 return Activity(**activity)
             else:
@@ -47,16 +54,16 @@ class ActivityRepository:
             else:
                 return []
 
-    def find_by_professor(self, professor_id) -> list[dict]:
+    def find_by_professor(self, professor_id) -> list[Activity]:
         """Buscar todas las actividades de un professor."""
         with self.db.get_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT * FROM activities WHERE professor_id = %s ORDER BY created_at DESC",
                            (professor_id,))
             result = cursor.fetchall()
-            return result
+            return [Activity(**activity) for activity in result]
 
-    def find_by_due_date(self, due_date: datetime) -> list[dict]:
+    def find_by_due_date(self, due_date: datetime) -> list[Activity]:
         """Buscar actividades por fecha de entrega.
 
         Se asume due_date del tipo datetime.datetime y al buscar
@@ -67,7 +74,7 @@ class ActivityRepository:
             cursor.execute("SELECT * FROM activities WHERE due_date = %s ORDER BY created_at DESC",
                            (due_date.date,))
             result = cursor.fetchall()
-            return result
+            return [Activity(**activity) for activity in result]
 
     def save(self, activity: Activity) -> Activity:
         with self.db.get_connection() as conn:
