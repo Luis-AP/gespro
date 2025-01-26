@@ -132,7 +132,7 @@ def activity_grades(activity_id):
     except ValueError as err:
         return jsonify({"message": f"Value error. {err}"}), 422
     except ActivityOwnerError as err:
-        return jsonify({"message": f"Unable to delete. {err}"}), 403
+        return jsonify({"message": f"{err}"}), 403
     except Error as err:
         app.logger.error("MySQL error. %s - %s", err.errno, err.msg)
         abort(500)

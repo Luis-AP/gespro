@@ -95,13 +95,14 @@ class ActivityService:
             raise ValueError("Activity doesn't exist.")
         if professor_id != activity.professor_id:
             raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
-        if activity.due_date <= datetime.today():
+        if activity.due_date.date() < datetime.today().date():
             raise ValueError("Activity already due.")
 
         self.activity_repository.delete(activity.id)
 
     def get_grades(self, activity_id: int, professor_id: int) -> list[Project]:
         og_activity = self.activity_repository.find_by_id(activity_id)
+        app.logger.debug("og_activity: %s", og_activity)
         if og_activity.id is None: # si la actividad no existe su id es None
             raise ValueError("Activity doesn't exist.")
         if professor_id != og_activity.professor_id:
