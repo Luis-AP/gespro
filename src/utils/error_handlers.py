@@ -8,7 +8,7 @@ def register_error_handlers(app):
         """Maneja errores de petición incorrecta"""
         return jsonify({
             "error": "Solicitud incorrecta",
-            "mensaje": str(error.description)
+            "mensaje": error.description if error.description != "" else "La solicitud no pudo ser procesada"
         }), 400
 
     @app.errorhandler(401)
@@ -16,15 +16,16 @@ def register_error_handlers(app):
         """Maneja errores de autenticación"""
         return jsonify({
             "error": "No autorizado",
-            "mensaje": "Debe iniciar sesión para acceder a este recurso"
+            "mensaje": error.description if error.description != "" else "Debe iniciar sesión para acceder a este recurso"
         }), 401
 
     @app.errorhandler(403)
     def forbidden_error(error):
         """Maneja errores de permisos"""
+
         return jsonify({
             "error": "Acceso denegado",
-            "mensaje": "No tiene permisos para acceder a este recurso"
+            "mensaje": error.description if error.description != "" else "No tiene permisos para acceder a este recurso"
         }), 403
 
     @app.errorhandler(404)
@@ -32,7 +33,7 @@ def register_error_handlers(app):
         """Maneja errores de recurso no encontrado"""
         return jsonify({
             "error": "No encontrado",
-            "mensaje": "El recurso solicitado no existe"
+            "mensaje": error.description if error.description != "" else "El recurso solicitado no existe"
         }), 404
 
     @app.errorhandler(500)
@@ -41,5 +42,5 @@ def register_error_handlers(app):
         app.logger.error(f"Error interno: {str(error)}")
         return jsonify({
             "error": "Error del servidor",
-            "mensaje": "Ha ocurrido un error interno en el servidor"
+            "mensaje": error.description if error.description != "" else "Ha ocurrido un error interno en el servidor"
         }), 500
