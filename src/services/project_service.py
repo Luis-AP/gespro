@@ -102,6 +102,9 @@ class ProjectService:
         projects = self.project_repository.find_projects_with_details(filters)
         for project in projects:
             project['member_ids'] = [int(id) for id in project['member_ids'].split(',')]
+            project['created_at'] = project['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+            project['updated_at'] = project['updated_at'].strftime('%Y-%m-%d %H:%M:%S')
+            project['due_date'] = project['due_date'].strftime('%Y-%m-%d')
         return projects
 
     def _validate_repository_url(self, url: str) -> bool:
