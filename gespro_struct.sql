@@ -25,9 +25,9 @@ DROP TABLE IF EXISTS `activities`;
 CREATE TABLE `activities` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(45) NOT NULL,
-  `description` varchar(245) DEFAULT NULL,
+  `description` varchar(1000) DEFAULT NULL,
   `due_date` datetime NOT NULL,
-  `min_grade` decimal(10,0) NOT NULL,
+  `min_grade` decimal(3,1) unsigned NOT NULL,
   `professor_id` int unsigned NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -131,7 +131,7 @@ CREATE TABLE `projects` (
   `repository_url` varchar(250) NOT NULL,
   `activity_id` int unsigned NOT NULL,
   `is_group` tinyint unsigned NOT NULL DEFAULT '0',
-  `grade` decimal(10,0) DEFAULT NULL,
+  `grade` decimal(3,1) unsigned DEFAULT NULL,
   `status` enum('OPEN','READY','GRADED') NOT NULL DEFAULT 'OPEN',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -271,9 +271,9 @@ DELIMITER ;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `CreateActivity`(
     IN p_name VARCHAR(45),
-    IN p_description VARCHAR(245),
+    IN p_description VARCHAR(1000),
     IN p_due_date datetime,
-    IN p_min_grade decimal(10,0),
+    IN p_min_grade decimal(3,1) unsigned,
     IN p_professor_id INT,
     OUT activity_id INT UNSIGNED
 )
