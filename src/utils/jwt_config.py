@@ -15,7 +15,8 @@ def init_jwt(app):
                 "Access-Control-Allow-Headers", "Content-Type,Authorization"
             )
             response.headers.add(
-                "Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS"
+                "Access-Control-Allow-Methods",
+                "GET,POST,PUT,PATCH,DELETE,OPTIONS",
             )
             return response
 
