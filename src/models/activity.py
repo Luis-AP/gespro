@@ -1,3 +1,5 @@
+from datetime import datetime
+
 class Activity:
     def __init__(self, **kwargs):
         self.id = kwargs.get("id")
@@ -10,4 +12,5 @@ class Activity:
         self.updated_at = kwargs.get("updated_at")
 
     def __repr__(self):
-        return f"<Activity {self.name}>"
+        attrs = (f"{k}={v}" for k,v in self.__dict__.items())
+        return "{}({})".format(self.__class__.__name__, f", ".join(attrs))

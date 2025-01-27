@@ -41,10 +41,10 @@ def login():
     user = User(email=request.form.get("email", ''),
                 password=request.form.get("password", ''))
 
-    token, result = AuthService(app.db).login(user)
-    
+    token, result, professor_id, student_id  = AuthService(app.db).login(user)
+
     if token:
-        return jsonify({"token": token, "role": result}), 200
+        return jsonify({"token": token, "role": result, "professor_id": professor_id, "student_id": student_id}), 200
         
     if result == "INVALID_CREDENTIALS":
         return jsonify({
@@ -62,6 +62,8 @@ def validate_token():
         claims = get_jwt()
         user_id = claims.get("user_id")
         role = claims.get("role")
+        student_id = claims.get("student_id")
+        professor_id = claims.get("professor_id")
         
         if role == "student":
             user = AuthService(app.db).get_student(user_id)
@@ -71,6 +73,8 @@ def validate_token():
         if user:
             return jsonify({
                 "id": user.user_id,
+                "student_id": student_id if role == "student" else None,
+                "professor_id": professor_id if role == "professor" else None,
                 "name": f"{user.first_name} {user.last_name}",
                 "email": user.email,
                 "role": role,
