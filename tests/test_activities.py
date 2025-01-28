@@ -5,6 +5,7 @@ from src.models.activity import Activity
 from src.repositories.activity_repository import ActivityRepository
 from tests.utils import cleanup
 from mysql.connector.errors import IntegrityError, DataError
+import datetime
 
 
 @pytest.fixture
@@ -46,6 +47,113 @@ def setup(config):
     with db.get_connection() as conn:
         cleanup(conn)
 
+def test_update_all_fields_success(activity_repository):
+    # Arrange
+    original_activity = activity_repository.find_by_id(1)
+    activity = Activity(
+        id=1,
+        name="Nombre actualizado",
+        description="Nueva descripción",
+        due_date="2025-02-01",
+        min_grade=7,
+        professor_id=1
+    )
+
+    # Act
+    activity_repository.update(activity)
+    updated_activity = activity_repository.find_by_id(1)
+
+    # Assert
+    assert updated_activity.name == "Nombre actualizado"
+    assert updated_activity.description == "Nueva descripción"
+    assert updated_activity.due_date == datetime.datetime(2025, 2, 1, 0, 0)
+    assert updated_activity.min_grade == 7
+    assert updated_activity.professor_id == original_activity.professor_id
+    assert updated_activity.created_at == original_activity.created_at
+    assert updated_activity.updated_at > original_activity.updated_at
+
+def test_update_partial_fields(activity_repository):
+    # Arrange
+    original_activity = activity_repository.find_by_id(1)
+    activity = Activity(
+        id=1,
+        name="Actualización parcial",
+        description="Descripción para actualización parcial",
+        due_date=original_activity.due_date,
+        min_grade=original_activity.min_grade
+    )
+
+    # Act
+    activity_repository.update(activity)
+    updated_activity = activity_repository.find_by_id(1)
+
+    # Assert
+    assert updated_activity.name == "Actualización parcial"
+    assert updated_activity.description == "Descripción para actualización parcial"
+    assert updated_activity.due_date == original_activity.due_date
+    assert updated_activity.min_grade == original_activity.min_grade
+    assert updated_activity.professor_id == original_activity.professor_id
+    assert updated_activity.created_at == original_activity.created_at
+    assert updated_activity.updated_at > original_activity.updated_at
+
+def test_update_with_invalid_date_format(activity_repository):
+    # Arrange
+    original_activity = activity_repository.find_by_id(1)
+    activity = Activity(
+        id=1,
+        name="Actividad de prueba",
+        description="Test Description",
+        due_date="invalid-date",  # Formato inválido
+        min_grade=7
+    )
+
+    # Act & Assert
+    with pytest.raises(DataError):
+        activity_repository.update(activity)
+    
+    # Assert
+    current_activity = activity_repository.find_by_id(1)
+    assert current_activity.name == original_activity.name
+    assert current_activity.description == original_activity.description
+    assert current_activity.due_date == original_activity.due_date
+    assert current_activity.updated_at == original_activity.updated_at
+
+def test_update_name_too_long_data_error(activity_repository):
+    # Arrange
+    original_activity = activity_repository.find_by_id(1)
+    activity = Activity(
+        id=1,
+        name= "s" * 46,
+        description= "Una nueva descripción",
+        due_date= original_activity.due_date,
+        min_grade= original_activity.min_grade
+    )
+
+    # Act & Assert
+    with pytest.raises(DataError):
+        activity_repository.update(activity)
+
+    # Assert
+    current_activity = activity_repository.find_by_id(1)
+    assert current_activity.name == original_activity.name
+    assert current_activity.updated_at == original_activity.updated_at
+
+def test_update_notexistent_activity(activity_repository):
+     # Arrange
+    activity = Activity(
+        id=9999,
+        name= "Nuevo nombre de actividad",
+        description= "Una nueva descripción",
+        due_date= "2025-02-02",
+        min_grade= 5
+    )
+
+    # Act
+    activity_repository.update(activity)
+
+    # Assert
+    notexistent_activity = activity_repository.find_by_id(9999)
+    assert notexistent_activity.id is None
 
 def test_save_with_all_fields(activity_repository):
     # Arrange
@@ -63,7 +171,6 @@ def test_save_with_all_fields(activity_repository):
     # Assert
     assert saved_activity.id == 4
 
-
 def test_save_raises_integrity_error_invalid_professor_id(activity_repository):
     # Arrange
     wrong_professor_id = 100
@@ -79,7 +186,6 @@ def test_save_raises_integrity_error_invalid_professor_id(activity_repository):
     with pytest.raises(IntegrityError):
         activity_repository.save(activity)
 
-
 def test_save_raises_data_error_name_too_long(activity_repository):
     # Arrange
     activity = Activity(
@@ -94,7 +200,6 @@ def test_save_raises_data_error_name_too_long(activity_repository):
     with pytest.raises(DataError):
         activity_repository.save(activity)
 
-
 def test_save_without_optional_fields(activity_repository):
     # Arrange
     activity = Activity(
@@ -108,7 +213,6 @@ def test_save_without_optional_fields(activity_repository):
 
     # Assert
     assert saved_activity.id == 4
-
 
 def test_save_raises_integrity_error_null_name(activity_repository):
     # Arrange

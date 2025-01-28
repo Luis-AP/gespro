@@ -6,7 +6,9 @@ from src.db import Database
 from tests.utils import cleanup
 from src.repositories.project_repository import ProjectRepository
 from src.models.project import Project
-
+from src.repositories.activity_repository import ActivityRepository
+from src.models.activity import Activity
+import datetime
 
 class TestProjects:
     """Pruebas de integración para los proyectos."""
@@ -50,6 +52,12 @@ class TestProjects:
         """Obtener instancia de ProjectRepository"""
         db = config
         return ProjectRepository(db)
+    
+    @pytest.fixture
+    def activity_repository(self, config: Database) -> ActivityRepository:
+        """Obtener instancia de ActivityRepository"""
+        db = config
+        return ActivityRepository(db)
 
     @pytest.fixture
     def app(self, config) -> Flask:
@@ -74,6 +82,21 @@ class TestProjects:
             "/api/auth/login",
             data={
                 "email": "nicolas_blanco1989@yahoo.com",
+                "password": "password123",
+            },
+            content_type="multipart/form-data",
+        )
+
+        return response.json["token"]
+    
+    @pytest.fixture
+    def get_not_owner_token(self, client: FlaskClient) -> str:
+        """Obtiene token de autenticación de un estudiante"""
+
+        response = client.post(
+            "/api/auth/login",
+            data={
+                "email": "juan_monzon2001@gmail.com",
                 "password": "password123",
             },
             content_type="multipart/form-data",
@@ -203,3 +226,103 @@ class TestProjects:
         # Assert
         assert project.title == og_project.title
         assert project.repository_url == og_project.repository_url
+
+    def test_delete_project_ok(self, client, get_student_token, project_repository):
+        """
+        Caso de éxito para eliminar un proyecto
+        """
+        # Arrange
+        project_id = 1
+        headers =  {"Authorization": f"Bearer {get_student_token}"}
+
+        # Act
+        response = client.delete(
+            f"/api/projects/{project_id}",
+            headers=headers
+        )
+
+        # Assert
+        assert response.status_code == 204
+        assert response.data == b''
+
+        deleted_project = project_repository.find_by_id(project_id)
+        assert deleted_project.id is None
+
+    def test_delete_project_professor_forbidden(self, client, get_professor_token, project_repository):
+        """
+        Caso de fallo para eliminar un proyecto por parte de un profesor
+        """
+        # Arrange
+        project_id = 1
+        headers =  {"Authorization": f"Bearer {get_professor_token}"}
+
+        # Act
+        response = client.delete(
+            f"/api/projects/{project_id}",
+            headers=headers
+        )
+
+        # Assert
+        assert response.status_code == 403
+        assert response.json["mensaje"] == "Only students can delete projects"
+
+        deleted_project = project_repository.find_by_id(project_id)
+        assert deleted_project.id is not None
+
+    def test_delete_project_not_owner(self, client, get_not_owner_token, project_repository):
+        """
+        Caso de fallo por un estudiante que no es el dueño del proyecto
+        """
+        # Arrange
+        project_id = 1
+        headers =  {"Authorization": f"Bearer {get_not_owner_token}"}
+
+        # Act
+        response = client.delete(
+            f"/api/projects/{project_id}",
+            headers=headers
+        )
+
+        # Assert
+        assert response.status_code == 403
+        assert response.json["mensaje"] == "Only project owner can delete project"
+
+        deleted_project = project_repository.find_by_id(project_id)
+        assert deleted_project.id is not None
+    
+    def test_delete_project_after_deadline(self, client, get_student_token, project_repository, activity_repository):
+        """
+        Caso de fallo al intentar eliminar un proyecto de una actividad que ya cerró
+        """
+        # Assert
+        project_id = 1
+        headers =  {"Authorization": f"Bearer {get_student_token}"}
+
+        # Modificar fecha de entrega de actividad para que esté cerrada en el día de hoy
+        original_activity = activity_repository.find_by_id(1)
+        updated_date = datetime.datetime.now().date() - datetime.timedelta(days=1)
+        formatted_date = updated_date.strftime("%Y-%m-%d")
+
+        activity = Activity(
+            id=original_activity.id,
+            name=original_activity.name,
+            description=original_activity.description,
+            due_date=formatted_date,
+            min_grade=original_activity.min_grade,
+            professor_id=original_activity.professor_id
+        )
+        activity_repository.update(activity)
+
+        # Act
+        response = client.delete(
+            f"/api/projects/{project_id}",
+            headers=headers
+        )
+
+        # Assert
+        assert response.status_code == 403
+        assert response.json["mensaje"] == "Cannot delete project after activity deadline"
+
+        deleted_project = project_repository.find_by_id(project_id)
+        assert deleted_project.id is not None
+
