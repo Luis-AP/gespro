@@ -1,6 +1,9 @@
 import pytest
+import datetime
+
 from flask import Flask
 from flask.testing import FlaskClient
+
 from config import TestingConfig
 from src.db import Database
 from tests.utils import cleanup
@@ -8,7 +11,6 @@ from src.repositories.project_repository import ProjectRepository
 from src.models.project import Project
 from src.repositories.activity_repository import ActivityRepository
 from src.models.activity import Activity
-import datetime
 
 class TestProjects:
     """Pruebas de integración para los proyectos."""
@@ -326,3 +328,26 @@ class TestProjects:
         deleted_project = project_repository.find_by_id(project_id)
         assert deleted_project.id is not None
 
+    def test_create_project_non_existent_activity(self, client, get_student_token):
+        # arrange
+        # obtener token
+        token = get_student_token
+        activity_id = 5  # id de actividad inexistente
+
+        # act
+        # enviar request
+        request = {"title": "Mi proyecto",
+                   "repository_url": "https://github.com/miuser/mirepo",
+                   "activity_id": activity_id}
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.post("/api/projects/",
+                               json=request,
+                               headers=headers,
+                               content_type="application/json")
+        # assert
+        # ver la response (codigo) debe ser 404
+        #logger.info("valor de status code: %s", response.status_code)
+        assert response.status_code == 404
+        # ver que el 'mensaje' sea "Activity not found"
+        #logger.info("valor de mensaje: %s", response.json["mensaje"])
+        assert response.json["mensaje"] == "Activity not found"
