@@ -238,7 +238,6 @@ def test_delete_existing_activity_id(activity_repository):
 
     # assert
     activity = activity_repository.find_by_id(activity_id)
-    # assert activity no existe
     assert activity.id is None
 
 def test_delete_non_existing_activity_id(activity_repository):
@@ -250,7 +249,6 @@ def test_delete_non_existing_activity_id(activity_repository):
 
     # assert
     activity = activity_repository.find_by_id(activity_id)
-    # assert activity no existe
     assert activity.id is None
 
 def test_delete_non_valid_activity_id(activity_repository):

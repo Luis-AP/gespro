@@ -330,24 +330,17 @@ class TestProjects:
 
     def test_create_project_non_existent_activity(self, client, get_student_token):
         # arrange
-        # obtener token
-        token = get_student_token
         activity_id = 5  # id de actividad inexistente
 
         # act
-        # enviar request
         request = {"title": "Mi proyecto",
                    "repository_url": "https://github.com/miuser/mirepo",
                    "activity_id": activity_id}
-        headers = {"Authorization": f"Bearer {token}"}
+        headers = {"Authorization": f"Bearer {get_student_token}"}
         response = client.post("/api/projects/",
                                json=request,
                                headers=headers,
                                content_type="application/json")
         # assert
-        # ver la response (codigo) debe ser 404
-        #logger.info("valor de status code: %s", response.status_code)
         assert response.status_code == 404
-        # ver que el 'mensaje' sea "Activity not found"
-        #logger.info("valor de mensaje: %s", response.json["mensaje"])
         assert response.json["mensaje"] == "Activity not found"
