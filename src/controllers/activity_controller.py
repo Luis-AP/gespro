@@ -33,10 +33,11 @@ def get_activities():
 @jwt_required()
 def get_activity(activity_id: int):
     claims = get_jwt()
-    if claims["role"] != "professor":
-        abort(403)
+    professor_id = None
+    if claims["role"] == "professor":
+        professor_id = claims["professor_id"]
     try:
-        activity = ActivityService(app.db).get_activity(activity_id, claims["professor_id"])
+        activity = ActivityService(app.db).get_activity(activity_id, professor_id)
     except ActivityOwnerError as err:
         return jsonify({"message": f"{err}"}), 403
     else:
