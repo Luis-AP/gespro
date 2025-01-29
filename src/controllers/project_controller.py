@@ -13,7 +13,7 @@ project_routes_bp = Blueprint('project_bp', __name__, url_prefix="/api/projects"
 def create_project():
     claims = get_jwt()
     if claims.get("role") != "student":
-        abort(403, description="Only students can create projects")
+        abort(403, description="Solo los estudiantes pueden crear proyectos.")
 
     try:
         project = Project(
@@ -32,7 +32,7 @@ def create_project():
     except NotFoundError as e:
         abort(404, description=str(e))
     except Exception as e:
-        app.logger.error(f"Error creating project: {str(e)}")
+        app.logger.error(f"Error al crear el proyecto: {str(e)}")
         abort(500, description=str(e))
 
 @project_routes_bp.route("/<int:project_id>/members", methods=["POST"])
@@ -40,7 +40,7 @@ def create_project():
 def add_member(project_id: int):
     claims = get_jwt()
     if claims.get("role") != "student":
-        return jsonify({"message": "Only students can add members to projects"}), 403
+        return jsonify({"message": "Solo los estudiantes pueden añadir miembros a proyectos."}), 403
 
     try:
         member = ProjectService(app.db).add_member(
@@ -48,7 +48,7 @@ def add_member(project_id: int):
             student_id=request.json.get("student_id"),
             requesting_student_id=claims.get("student_id")
         )
-        return jsonify({"message": "Member added successfully", "id": member.id}), 201
+        return jsonify({"message": "Miembro añadido con éxito.", "id": member.id}), 201
     except ProjectValueError as e:
         abort(400, description=str(e))
     except ProjectServiceError as e:
@@ -58,7 +58,7 @@ def add_member(project_id: int):
     except NotFoundError as e:
         abort(404, description=str(e))
     except Exception as e:
-        app.logger.error("Error adding member: %s", e)
+        app.logger.error("Error al añadir un miembro: %s", e)
         abort(500)
 
 @project_routes_bp.route("/", methods=["GET"])
@@ -73,7 +73,7 @@ def get_projects():
     elif claims.get("role") == "professor":
         filters["professor_id"] = claims.get("professor_id")
     else:
-        return jsonify({"message": "Unauthorized role"}), 403
+        return jsonify({"message": "Rol no autorizado."}), 403
     
     # Filtramos por id de actividad si se proporciona
     activity_id = request.args.get("activity_id")
@@ -84,7 +84,7 @@ def get_projects():
         projects = ProjectService(app.db).get_projects(filters)
         return jsonify(projects), 200
     except Exception as e:
-        app.logger.error(f"Error retrieving projects: {str(e)}")
+        app.logger.error(f"Error al obtener los proyectos: {str(e)}")
         abort(500, description=str(e))
 
 @project_routes_bp.route("/<int:project_id>/members/<int:student_id>", methods=["DELETE"])
@@ -92,7 +92,7 @@ def get_projects():
 def remove_member(project_id: int, student_id: int):
     claims = get_jwt()
     if claims.get("role") != "student":
-        return jsonify({"message": "Only students can remove members from projects"}), 403
+        return jsonify({"message": "Solo los estudiantes pueden eliminar miembros del proyecto."}), 403
 
     try:
         ProjectService(app.db).remove_member(
@@ -100,7 +100,7 @@ def remove_member(project_id: int, student_id: int):
             student_id=student_id,
             requesting_student_id=claims.get("student_id")
         )
-        return jsonify({"message": "Member removed successfully"}), 200
+        return jsonify({"message": "Miembro eliminado con éxito."}), 200
     except ProjectValueError as e:
         abort(401, description=str(e))
     except ProjectServiceError as e:
@@ -110,7 +110,7 @@ def remove_member(project_id: int, student_id: int):
     except NotFoundError as e:
         abort(404, description=str(e))
     except Exception as e:
-        app.logger.error("Error removing member: %s", e)
+        app.logger.error("Error al eliminar miembro: %s", e)
         abort(500, description=str(e))
 
 @project_routes_bp.route("/<int:project_id>", methods=["PATCH"])
@@ -118,7 +118,7 @@ def remove_member(project_id: int, student_id: int):
 def update_project(project_id: int):
     claims = get_jwt()
     if claims["role"] != "student":
-        abort(403, description="Only students can update projects")
+        abort(403, description="Solo los estudiantes pueden actualizar proyectos.")
 
     project = Project(
         id=project_id,
@@ -138,7 +138,7 @@ def update_project(project_id: int):
     except NotFoundError as e:
         abort(404, description=str(e))
     except Exception as e:
-        app.logger.error(f"Error updating project: {str(e)}")
+        app.logger.error(f"Error al actualizar el proyecto: {str(e)}")
         abort(500, description=str(e))
     else:
         return jsonify(project), 200
@@ -148,7 +148,7 @@ def update_project(project_id: int):
 def delete_project(project_id: int):
     claims = get_jwt()
     if claims["role"] != "student":
-        abort(403, description="Only students can delete projects")
+        abort(403, description="Solo los estudiantes pueden eliminar proyectos.")
 
     try:
         ProjectService(app.db).delete(project_id, claims["student_id"])
@@ -159,7 +159,7 @@ def delete_project(project_id: int):
     except ProjectOwnerError as e:
         abort(403, description=str(e))
     except Exception as e:
-        app.logger.error(f"Error deleting project: {str(e)}")
+        app.logger.error(f"Error al eliminar el proyecto: {str(e)}")
         abort(500, description=str(e))
     else:
         return "", 204

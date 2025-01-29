@@ -82,7 +82,7 @@ class ProjectRepository:
             except DatabaseError as e:
                 conn.rollback()
                 if e.errno == 1644:  # SQLSTATE '45000'
-                    raise ProjectError("Student already participates in a project for this activity")
+                    raise ProjectError("El estudiante ya participa en un proyecto para esta actividad")
                 raise IntegrityError from e
             else:
                 conn.commit()
@@ -122,10 +122,10 @@ class ProjectRepository:
             except DatabaseError as e:
                 conn.rollback()
                 if e.errno == 1644:  # SQLSTATE '45000'
-                    raise ProjectError("Student already participates in a project for this activity")
+                    raise ProjectError("El estudiante ya participa en un proyecto para esta actividad")
             except IntegrityError:
                 conn.rollback()
-                raise ProjectError("The ID doesn't belong to any student")
+                raise ProjectError("El id no pertenece a un estudiante")
             except Error as e:
                 conn.rollback()
                 raise
@@ -152,7 +152,7 @@ class ProjectRepository:
                 conn.commit()
             except IntegrityError:
                 conn.rollback()
-                raise ProjectError("Cannot remove student from project")
+                raise ProjectError("No se puede eliminar al estudiante del proyecto")
 
     def update_status(self, project_id: int, status: str):
         with self.db.get_connection() as conn:
@@ -190,7 +190,7 @@ class ProjectRepository:
                 )
             except Error:
                 conn.rollback()
-                raise ProjectError("Error updating project")
+                raise ProjectError("Error al actualizar el proyecto")
             else:
                 conn.commit()
                 return self.find_by_id(project.id)
@@ -202,6 +202,6 @@ class ProjectRepository:
                 cursor.execute("DELETE FROM projects WHERE id = %s", (project_id,))
             except Error:
                 conn.rollback()
-                raise ProjectError("Error deleting project")
+                raise ProjectError("Error al eliminar el proyecto")
             else:
                 conn.commit()

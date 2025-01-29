@@ -22,7 +22,7 @@ class ActivityService:
         if activity.id is None: # si la actividad no existe su id es None
             return activity
         if professor_id != activity.professor_id:
-            raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
+            raise ActivityOwnerError("El professor_id de la petición no coincide con el de la actividad.")
         return activity
 
     def get_activities(self, professor_id=None):
@@ -32,33 +32,33 @@ class ActivityService:
             if self.user_repository.get_professor_by_id(professor_id):
                 return self.activity_repository.find_by_professor(professor_id)
             else:
-                raise ValueError("Professor id doesn't exist.")
+                raise ValueError("El id de profesor no existe.")
         return self.activity_repository.find_all()
 
     def create(self, activity: Activity) -> Activity:
         if activity.name is None:
-            raise ValueError("Activity name cannot be empty.")
+            raise ValueError("El nombre de la actividad no puede estar vacío.")
         # no hay ninguna validacion para activity.description
         if activity.due_date is None:
-            raise ValueError("Activity due_date cannot be empty.")
+            raise ValueError("La fecha due_date no puede estar vacía.")
         else:
             try:
                 activity.due_date = datetime.strptime(activity.due_date, "%Y-%m-%d")
             except ValueError:
-                raise ValueError("Activity due_date is in the wrong format.")
+                raise ValueError("La fecha due_date de la actividad tiene formato incorrecto.")
             else:
                 if activity.due_date < datetime.today():
-                    raise ValueError("Activity due_date cannot be a past date.")
+                    raise ValueError("La fecha due_date de la actividad no puede ser en el pasado.")
         if activity.min_grade is None:
-            raise ValueError("Activity min_grade cannot be empty.")
+            raise ValueError("La nota mínima de la actividad no puede estar vacía.")
         else:
             if activity.min_grade.isdecimal():
                 activity.min_grade = int(activity.min_grade)
                 if not (0 < activity.min_grade <= 10):
-                    raise ValueError("Activity min_grade not in range 1 - 10.")
+                    raise ValueError("La nota mínima de la actividad no está en el rango 1 - 10.")
         if activity.professor_id is None: # esto no debería pasar nunca
             app.logger.critical("activity.professor_id is None, no debería pasar nunca.")
-            raise RuntimeError("Activity professor_id cannot be empty.")
+            raise RuntimeError("El professor_id de la actividad no puede estar vacío.")
         return self.activity_repository.save(activity)
 
     def update(self, activity: Activity) -> Activity:
@@ -66,7 +66,7 @@ class ActivityService:
         if og_activity.id is None: # si la actividad no existe su id es None
             return og_activity
         if activity.professor_id != og_activity.professor_id:
-            raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
+            raise ActivityOwnerError("El professor_id de la petición no coincide con el de la actividad.")
         if activity.name is None:
             activity.name = og_activity.name
         if activity.description is None and og_activity.description is not None:
@@ -77,19 +77,19 @@ class ActivityService:
             try:
                 activity.due_date = datetime.strptime(activity.due_date, "%Y-%m-%d")
             except ValueError:
-                raise ValueError("Activity due_date is in the wrong format.")
+                raise ValueError("La fecha due_date de la actividad tiene formato incorrecto.")
             else:
                 if activity.due_date < datetime.today():
-                    raise ValueError("Activity due_date cannot be a past date.")
+                    raise ValueError("La fecha due_date de la actividad no puede ser en el pasado.")
         if activity.min_grade is None:
             activity.min_grade = og_activity.min_grade
         else:
             if activity.min_grade.isdecimal():
                 activity.min_grade = int(activity.min_grade)
                 if not (0 < activity.min_grade <= 10):
-                    raise ValueError("Activity min_grade not in range 1 - 10.")
+                    raise ValueError("La nota mínima de la actividad no está en el rango 1 - 10.")
             else:
-                raise ValueError("Activity min_grade must be decimal.")
+                raise ValueError("La nota mínima de la actividad debe ser decimal.")
         return self.activity_repository.update(activity)
 
     def delete (self, activity_id: int, professor_id: int):
@@ -100,19 +100,18 @@ class ActivityService:
         """
         activity = self.activity_repository.find_by_id(activity_id)
         if activity.id is None:
-            raise ValueError("Activity doesn't exist.")
+            raise ValueError("La actividad no existe.")
         if professor_id != activity.professor_id:
-            raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
+            raise ActivityOwnerError("El professor_id de la petición no coincide con el de la actividad.")
         if activity.due_date.date() < datetime.today().date():
-            raise ValueError("Activity already due.")
+            raise ValueError("La actividad ya se venció.")
 
         self.activity_repository.delete(activity.id)
 
     def get_grades(self, activity_id: int, professor_id: int) -> list[Project]:
         og_activity = self.activity_repository.find_by_id(activity_id)
-        app.logger.debug("og_activity: %s", og_activity)
         if og_activity.id is None: # si la actividad no existe su id es None
-            raise ValueError("Activity doesn't exist.")
+            raise ValueError("La actividad no existe.")
         if professor_id != og_activity.professor_id:
-            raise ActivityOwnerError("Request's professor_id does not match activity's professor_id.")
+            raise ActivityOwnerError("El professor_id de la petición no coincide con el de la actividad.")
         return [Project(**project) for project in self.project_repository.find_by_activity(activity_id)]

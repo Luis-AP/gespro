@@ -59,11 +59,11 @@ def create_activity():
     try:
         activity = ActivityService(app.db).create(activity)
     except ValueError as err:
-        return jsonify({"message": f"Value error: {err}"}), 422
+        return jsonify({"message": f"Error de valor: {err}"}), 422
     except DataError as err:
-        return jsonify({"message": "Wrong size/format data."}), 422
+        return jsonify({"message": "Datos de tamaño/formato incorrectos."}), 422
     except IntegrityError as err:
-        return jsonify({"message": "Bad professor id."}), 422
+        return jsonify({"message": "id de profesor incorrecto."}), 422
     except Error as err:
         app.logger.error("MySQL error. %s - %s", err.errno, err.msg)
         abort(500)
@@ -91,11 +91,11 @@ def update_activity(activity_id: int):
     except ActivityOwnerError as err:
         return jsonify({"message": f"{err}"}), 403
     except ValueError as err:
-        return jsonify({"message": f"Value error: {err}"}), 422
+        return jsonify({"message": f"Error de valor: {err}"}), 422
     except IntegrityError:
-        return jsonify({"message": "Bad professor id."}), 422
+        return jsonify({"message": "id de profesor incorrecto."}), 422
     except DataError as err:
-        return jsonify({"message": "Wrong size/format data."}), 422
+        return jsonify({"message": "Datos de tamaño/formato incorrectos."}), 422
     except Error as err:
         app.logger.error("MySQL error. %s - %s", err.errno, err.msg)
         abort(500)
@@ -117,9 +117,9 @@ def delete_activity(activity_id):
     try:
         ActivityService(app.db).delete(activity_id, claims["professor_id"])
     except ValueError as err:
-        return jsonify({"message": f"Value error. {err}"}), 422
+        return jsonify({"message": f"Error de valor. {err}"}), 422
     except ActivityOwnerError as err:
-        return jsonify({"message": f"Unable to delete. {err}"}), 403
+        return jsonify({"message": f"No se pudo eliminar. {err}"}), 403
     except Error as err:
         app.logger.error("MySQL error. %s - %s", err.errno, err.msg)
         abort(500)
@@ -136,7 +136,7 @@ def activity_grades(activity_id):
     try:
         projects = ActivityService(app.db).get_grades(activity_id, claims["professor_id"])
     except ValueError as err:
-        return jsonify({"message": f"Value error. {err}"}), 422
+        return jsonify({"message": f"Error de valor. {err}"}), 422
     except ActivityOwnerError as err:
         return jsonify({"message": f"{err}"}), 403
     except Error as err:
