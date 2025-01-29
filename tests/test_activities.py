@@ -1,11 +1,13 @@
 import pytest
+import datetime
+
+from mysql.connector.errors import IntegrityError, DataError, Error
+
 from config import TestingConfig
 from src.db import Database
 from src.models.activity import Activity
 from src.repositories.activity_repository import ActivityRepository
 from tests.utils import cleanup
-from mysql.connector.errors import IntegrityError, DataError
-import datetime
 
 
 @pytest.fixture
@@ -226,3 +228,33 @@ def test_save_raises_integrity_error_null_name(activity_repository):
     # Act
     with pytest.raises(IntegrityError):
         activity_repository.save(activity)
+
+def test_delete_existing_activity_id(activity_repository):
+    # arrange
+    activity_id = 4
+
+    # act
+    activity_repository.delete(activity_id)
+
+    # assert
+    activity = activity_repository.find_by_id(activity_id)
+    assert activity.id is None
+
+def test_delete_non_existing_activity_id(activity_repository):
+    # arrange
+    activity_id = 88
+
+    # act
+    activity_repository.delete(activity_id)
+
+    # assert
+    activity = activity_repository.find_by_id(activity_id)
+    assert activity.id is None
+
+def test_delete_non_valid_activity_id(activity_repository):
+    # arrange
+    activity_id = "s"
+
+    # act assert
+    with pytest.raises(Error):
+        activity_repository.delete(activity_id)
