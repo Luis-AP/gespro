@@ -17,12 +17,13 @@ class ActivityService:
         self.project_repository = ProjectRepository(db)
         self.user_repository = UserRepository(db)
 
-    def get_activity(self, activity_id: int, professor_id: int) -> Activity:
+    def get_activity(self, activity_id: int, professor_id: None) -> Activity:
         activity = self.activity_repository.find_by_id(activity_id)
         if activity.id is None: # si la actividad no existe su id es None
             return activity
-        if professor_id != activity.professor_id:
-            raise ActivityOwnerError("El professor_id de la petición no coincide con el de la actividad.")
+        if professor_id is not None: # un professor está haciendo el request
+            if professor_id != activity.professor_id:
+                raise ActivityOwnerError("El professor_id de la petición no coincide con el de la actividad.")
         return activity
 
     def get_activities(self, professor_id=None):
