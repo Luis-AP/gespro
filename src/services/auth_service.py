@@ -53,7 +53,7 @@ class AuthService:
         # Validar requisitos de contraseña (8-16 caracteres, una mayúscula y un número)
         if not (len(student.password) > 8 and len(student.password) < 16):
             raise AuthPasswordError(
-                f"Non conforming password. Password length: {len(student.password)}"
+                f"La contraseña no cumple las condiciones. Longitud de contraseña: {len(student.password)}"
             )
         try:
             student.password = bcrypt.hashpw(

@@ -28,26 +28,26 @@ class ProjectService:
     def create_project(self, project: Project, student_id: int) -> Project:
         # Validar que se incluyó un ID de actividad
         if project.activity_id is None:
-            raise ProjectValueError("Activity ID is required")
+            raise ProjectValueError("El id de la actividad es obligatorio")
         # Validar que la actividad existe
         activity = self.activity_repository.find_by_id(project.activity_id)
         if not activity.id:
-            raise NotFoundError("Activity not found")
+            raise NotFoundError("Actividad no encontrada")
 
         # Validar fecha límite
         if datetime.now().date() > activity.due_date.date():
-            raise ProjectServiceError("Activity deadline has passed")
+            raise ProjectServiceError("El plazo de la actividad ha finalizado")
 
         # Validar que se incluyó un título
         if project.title is None:
-            raise ProjectValueError("Title is required")
+            raise ProjectValueError("El título es obligatorio")
 
         if project.repository_url is None:
-            raise ProjectValueError("Repository URL is required")
+            raise ProjectValueError("La URL del repositorio es obligatoria")
 
         # Validar URL del repositorio
         if not self._validate_repository_url(project.repository_url):
-            raise ProjectValueError("Invalid repository URL format")
+            raise ProjectValueError("Formato de URL de repositorio no válido")
 
         try:
             return self.project_repository.create_project(project, student_id)
@@ -57,20 +57,20 @@ class ProjectService:
     def add_member(self, project_id: int, student_id: int, requesting_student_id: int) -> dict:
         project = self.project_repository.find_by_id(project_id)
         if not project.id:
-            raise NotFoundError("Project not found")
+            raise NotFoundError("Proyecto no encontrado")
 
         # Verificar si el estudiante es el dueño del proyecto
         if not self.project_repository.is_project_owner(project_id, requesting_student_id):
-            raise ProjectOwnerError("Only project owner can add members")
+            raise ProjectOwnerError("Solo el propietario del proyecto puede añadir miembros")
 
         # Validar fecha límite
         activity = self.activity_repository.find_by_id(project.activity_id)
         if datetime.now().date() > activity.due_date.date():
-            raise ProjectServiceError("Activity deadline has passed")
+            raise ProjectServiceError("El plazo de actividad ha finalizado")
         try:
             member = self.project_repository.add_member(student_id, project_id)
             if member is None:
-                raise ProjectServiceError("The ID doesn't belong to any student")
+                raise ProjectServiceError("El id no pertenece a ningún estudiante")
             return member
         except ProjectError as e:
             raise ProjectServiceError(str(e))
@@ -79,19 +79,19 @@ class ProjectService:
         # Validar que el proyecto exista
         project = self.project_repository.find_by_id(project_id)
         if not project.id:
-            raise NotFoundError("Project not found")
+            raise NotFoundError("Proyecto no encontrado")
 
         # Verificar si el estudiante es el dueño del proyecto
         if not self.project_repository.is_project_owner(project_id, requesting_student_id):
-            raise ProjectOwnerError("Only project owner can remove members")
+            raise ProjectOwnerError("Solo el propietario del proyecto puede eliminar miembros")
 
         # Validar que el miembro pertenezca al proyecto
         if not self.project_repository.validate_member(student_id, project_id):
-            raise NotFoundError("Member not found in project")
+            raise NotFoundError("El estudiante no pertenece al proyecto")
 
         # No se puede remover al dueño del proyecto
         if self.project_repository.is_project_owner(project_id, student_id):
-            raise ProjectValueError("Cannot remove project owner")
+            raise ProjectValueError("No se puede eliminar al propietario del proyecto")
 
         try:
             self.project_repository.remove_student_from_project(student_id, project_id)
@@ -116,20 +116,20 @@ class ProjectService:
         # Validar que el proyecto exista
         og_project = self.project_repository.find_by_id(project.id)
         if og_project.id is None:
-            raise NotFoundError("Project not found")
+            raise NotFoundError("Proyecto no encontrado")
 
         # Validar que el estudiante es el dueño del proyecto
         if not self.project_repository.is_project_owner(project.id, student_id):
-            raise ProjectOwnerError("Only project owner can update project")
+            raise ProjectOwnerError("Solo el propietario del proyecto puede actualizar el proyecto")
 
         # Validar fecha límite de la actividad
         activity = self.activity_repository.find_by_id(og_project.activity_id)
         if datetime.now().date() > activity.due_date.date():
-            raise ProjectServiceError("Cannot update project after activity deadline")
+            raise ProjectServiceError("No se puede actualizar el proyecto una vez finalizado el plazo de actividad")
 
         # Validar URL del repositorio
         if project.repository_url and not self._validate_repository_url(project.repository_url):
-            raise ProjectValueError("Invalid repository URL format")
+            raise ProjectValueError("Formato de URL de repositorio no válido")
 
         # Llenar campos faltantes con los originales
         if project.title is None:
@@ -147,16 +147,16 @@ class ProjectService:
 
         project = self.project_repository.find_by_id(project_id)
         if not project.id:
-            raise NotFoundError("Project not found")
+            raise NotFoundError("Proyecto no encontrado")
 
         # Validar que el estudiante es el dueño del proyecto
         if not self.project_repository.is_project_owner(project_id, student_id):
-            raise ProjectOwnerError("Only project owner can delete project")
+            raise ProjectOwnerError("Solo el propitario del proyecto puede eliminar el proyecto")
 
         # Validar fecha límite de la actividad
         activity = self.activity_repository.find_by_id(project.activity_id)
         if datetime.now().date() > activity.due_date.date():
-            raise ProjectServiceError("Cannot delete project after activity deadline")
+            raise ProjectServiceError("No se puede eliminar el proyecto una vez finalizado el plazo de actividad")
 
         self.project_repository.delete(project_id)
 
@@ -170,19 +170,19 @@ class ProjectService:
         """
         project = self.project_repository.find_by_id(project_id)
         if project.id is None:
-            raise ValueError("Project doesn't exist.")
+            raise ValueError("El proyecto no existe.")
         activity = self.activity_repository.find_by_id(project.activity_id)
         if activity.id:
             if professor_id != activity.professor_id:
-                raise ValueError("Project's Activity doesn't belong to professor.")
+                raise ValueError("La actividad del proyecto no pertenece al profesor solicitante.")
             else:
                 if activity.due_date.date() >= datetime.today().date():
-                    raise ValueError("Cannot grade. Activity still OPEN.")
+                    raise ValueError("No se puede calificar. La actividad sigue abierta.")
 
                 try:
                     grade = float(grade)
                 except ValueError:
-                    raise ValueError("Bad grade.")
+                    raise ValueError("Calificación inválida.")
                 else:
                     if 0.0 <= grade <= 10.0:
                         try:
@@ -192,7 +192,7 @@ class ProjectService:
                         else:
                             return self.project_repository.find_by_id(project.id)
                     else:
-                        raise ValueError("Bad grade.")
+                        raise ValueError("Calificación inválida.")
         else:
             # thisi is highly unusual
-            raise RuntimeError("FK error between project & activity?")
+            raise RuntimeError("Error de FK entre proyecto y actividad")

@@ -27,14 +27,14 @@ def register_student():
     except DbError:
         abort(500)
     except AuthPasswordError:
-        return jsonify({"message": "Non conforming password"}), 401
+        return jsonify({"message": "La contraseña no cumple las condiciones."}), 401
     except ValueError:
         return jsonify({"message": "Empty email"}), 401
     else:
         if saved_student.id:
-            return jsonify({"message": f"Student {saved_student.email} successfully saved"}), 200
+            return jsonify({"message": f"Estudiante {saved_student.email} guardado con éxito."}), 200
         else:
-            return jsonify({"message": "Integrity error: email or enrollment_number duplicated."}), 500
+            return jsonify({"message": "Error de integridad: el correo o número de matrícula ya existe."}), 500
 
 @auth_routes_bp.route('/login', methods=['POST'])
 def login():
@@ -49,7 +49,7 @@ def login():
     if result == "INVALID_CREDENTIALS":
         return jsonify({
             "error": "Credenciales inválidas",
-            "mensaje": "Credenciales inválidas. Por favor, revisa tu email y contraseña."
+            "message": "Credenciales inválidas. Por favor, revisa tu email y contraseña."
         }), 401
     else:
         abort(500)
