@@ -174,7 +174,7 @@ class ProjectService:
         activity = self.activity_repository.find_by_id(project.activity_id)
         if activity.id:
             if professor_id != activity.professor_id:
-                raise ValueError("La actividad del proyecto no pertenece a un profesor existente.")
+                raise ValueError("La actividad del proyecto no pertenece al profesor solicitante.")
             else:
                 if activity.due_date.date() >= datetime.today().date():
                     raise ValueError("No se puede calificar. La actividad sigue abierta.")
