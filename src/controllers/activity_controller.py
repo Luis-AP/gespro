@@ -30,14 +30,20 @@ def get_activities():
         abort(404)
 
 @activity_routes_bp.route("/<int:activity_id>", methods=["GET"])
+@jwt_required()
 def get_activity(activity_id: int):
-    """DEPRECATED. nadie me usa :("""
-    app.logger.warning("Deprecation warning: get_activity. This endpoint might go away in the future.")
-    activity = ActivityRepository(app.db).find_by_id(activity_id)
-    if activity.id:
-        return jsonify(activity), 200
+    claims = get_jwt()
+    if claims["role"] != "professor":
+        abort(403)
+    try:
+        activity = ActivityService(app.db).get_activity(activity_id, claims["professor_id"])
+    except ActivityOwnerError as err:
+        return jsonify({"message": f"{err}"}), 403
     else:
-        abort(404)
+        if activity.id:
+            return jsonify(activity), 200
+        else:
+            abort(404)
 
 @activity_routes_bp.route("/", methods=["POST"])
 @jwt_required()
